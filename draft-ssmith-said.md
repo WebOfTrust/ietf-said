@@ -2,7 +2,7 @@
 
 title: "Self-Addressing IDentifier (SAID)"
 abbrev: "SAID"
-docname: draft-todo-yourname-protocol-latest
+docname: draft-ssmith-said-latest
 category: info
 
 ipr: trust200902
