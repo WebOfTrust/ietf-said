@@ -12,7 +12,7 @@ To remove any doubt as the origin on any contributions, all contributers are als
 Developer Ceritificate of Origin v1.1 (DCO 1.1) which may be found [here](https://developercertificate.org)
 
 As a GitHub repository, all contributions to this repository are also bound by
-the GitHub inbound=outbound policy. This may be found under Section D.6
+the GitHub *inbound=outbound* policy. This may be found under Section D.6
 [here](https://docs.github.com/en/github/site-policy/github-terms-of-service#6-contributions-under-repository-license)
 
 The legal structure of this repository with respect to the licensing of its
