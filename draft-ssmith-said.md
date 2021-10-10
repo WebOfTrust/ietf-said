@@ -25,13 +25,13 @@ normative:
 informative:  
 
 
---- abstract
+--- abstract 
 
-TODO Abstract
-Self-Addressing-IDentifier (SAID)
+A SAID (Self-Addressing IDentifier) is a special type of content addressable identifier that is self-referential.
 
 
---- middle
+
+--- middle 
 
 # Introduction
 
