@@ -1,28 +1,28 @@
 ---
 
-title: "Self-Addressing IDentifier (SAID)"
-abbrev: "SAID"
-docname: draft-ssmith-said-latest
-category: info
+title: "Self-Addressing IDentifier (SAID)"  
+abbrev: "SAID"  
+docname: draft-ssmith-said-latest  
+category: info  
 
-ipr: trust200902
-area: TODO
-workgroup: TODO Working Group
-keyword: Internet-Draft
+ipr: trust200902  
+area: TODO  
+workgroup: TODO Working Group  
+keyword: Internet-Draft  
 
-stand_alone: yes
-smart_quotes: no
-pi: [toc, sortrefs, symrefs]
+stand_alone: yes  
+smart_quotes: no  
+pi: [toc, sortrefs, symrefs]  
 
-author:
- -
-    name: S. Smith
-    organization: ProSapien LLC
-    email: sam@prosapien.com
+author:  
+ -  
+    name: S. Smith  
+    organization: ProSapien LLC  
+    email: sam@prosapien.com  
 
-normative:
+normative:  
 
-informative:
+informative:  
 
 
 --- abstract
