@@ -24,12 +24,13 @@ normative:
 
 informative:  
   KERI:
+    target: https://arxiv.org/abs/1907.02143
     title: Key Event Receipt Infrastructure (KERI)
     author:
         ins: S. Smith
         name: Samuel M. Smith
         org: ProSapien LLC
-    date: 2019,2020,2021
+    date: 2021
 
 
 tags: IETF, SAID, ACDC
