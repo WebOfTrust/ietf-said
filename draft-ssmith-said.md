@@ -56,9 +56,9 @@ An authenticatable data serialization is defined to be a serialization that is d
 
 When reasoning about a given content serialization, the existence of a non-cryptographically bound but self-referential identifier is a security vulnerability. Certainly this identifier can not be used by itself to securely reason about the content because it is not bound to the content. Anyone can place such an identifier inside a some other serialization and claim that the other serialization is the correct serialization for that self-referential identifier.  Unfortunately, a standard content addressable identifier for a serialization which is bound to the serialization can not be included in the serialization itself, i.e. can not be self-referential nor self-containe. It must be tracked independently. In contrast, a _self-addressing_ identifier is included in the serialization to which it is cryptographically bound making it self-referential and self-contained. Reasoning about *self-addressing identifiers* (SAIDs)is secure because the SAID will only verify if and only if its encompassing serialization has not been mutated (i.e. is immutable). Self-addressing identifiers used as references to serializations in other serialization enable tamper evident reasoning about the referenced serializations. This enables a more compact representation of an authenticatable data serialization that includes other serializations by reference to their SAIDs instead of by embedded containment.
 
-# Derivation and Verification Protocols
+# Generation and Verification Protocols
 
-The *self-addressing identifier* (SAID) derivation protocol is as follows:
+The *self-addressing identifier* (SAID) generation protocol is as follows:
 
 - Insert a dummy string of the same length as the eventually derived and CESR encoded SAID into the SAID field of a serialization. The dummy character is `#`, that is, ASCII 35 decimal (23 hex).
 - Compute the digest of the serialization with the dummy value in the SAID field.
