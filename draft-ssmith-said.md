@@ -94,6 +94,7 @@ E8wYuBjhslETYaLZcxMkWrhVbMcA8RS1pKYl7nJ77ntA
 ```
 
 The dummy string is then replaced with the `SAID` above to generated the final serialization with embedded `SAID` as follows:
+
 ```
 field0______E8wYuBjhslETYaLZcxMkWrhVbMcA8RS1pKYl7nJ77ntA______
 ```
@@ -119,8 +120,7 @@ For example since version 3.6 the default `dict` object in Python is insertion o
 
 Suppose the initial value of a Python `dict` is as follows:
 
-```python
-
+```
 {
     "said": "",
     "first": "Sue",
@@ -132,8 +132,7 @@ Suppose the initial value of a Python `dict` is as follows:
 
 As before the `SAID` will be a 44 character CESR encoded Blake-256 digest. The serialization will be *JSON*. The `said` field value in the `dict` is to be populated with the resulting `SAID`. First the value of the `said` field is replaced with a 44 character dummy string as follows:
 
-```python
-
+```
 {
     'said': '############################################',
     'first': 'Sue',
@@ -144,23 +143,25 @@ As before the `SAID` will be a 44 character CESR encoded Blake-256 digest. The s
 ```
 The `dict` is then serialized into JSON with no extra whitespace. The serialization is the following string:
 
-```JSON
+```
 {"said":"############################################","first":"Sue","last":"Smith","role":"Founder"}
 ```
 
 The Blake3-256 digest is then computed on that serialization above and encoded in `CESR` to provide the `SAID` as follows:
+
 ```
 EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk
 ```
 
 The value of the `said` field is now replaced with the computed and encoded `SAID` to produce the final serialization with embedded `SAID` as follows:
-```JSON
+
+```
 {"said":"EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk","first":"Sue","last":"Smith","role":"Founder"}
 ```
 
 The final serialization may be converted to a python `dict` by deserializing the JSON to produce:
-```python
 
+```
 {
     'said': 'EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk',
     'first': 'Sue',
