@@ -33,11 +33,11 @@ informative:
     date: 2021
 
 
-tags: IETF, SAID, ACDC
+tags: IETF, SAID, ACDC, SAD
 
 --- abstract 
 
-A `SAID` (Self-Addressing IDentifier) is a special type of content addressable identifier based on encoded cryptographic digest that is self-referential. The `SAID` derivation protocol defined herein enables verification that a given `SAID` is uniquely cryptographically bound to a serialization that includes the `SAID` as a field in that serialization. Embedding a `SAID` as a field in the associated serialization indicates a preferred content addressable identifier for that serialization that facilitates greater interoperability, reduced ambiguity, and enhanced security when reasoning about the serialization. Moreover given sufficient cryptographic strength, a cryptographic commitment such as a signature, digest, or another SAID, to a given SAID is essentially equivalent to a commitment to its associated serialization. Any change to the serialization invalidates its SAID thereby ensuring secure immutability evident reasoning with SAIDS about serializations or equivalently their `SAIDs`. Thus `SAIDs` better facilitate immutably referenced data serializations for applications such as Verifiable Credentials or Ricardian Contracts. 
+A `SAID` (Self-Addressing IDentifier) is a special type of content addressable identifier based on encoded cryptographic digest that is self-referential. The `SAID` derivation protocol defined herein enables verification that a given `SAID` is uniquely cryptographically bound to a serialization that includes the `SAID` as a field in that serialization. Embedding a `SAID` as a field in the associated serialization indicates a preferred content addressable identifier for that serialization that facilitates greater interoperability, reduced ambiguity, and enhanced security when reasoning about the serialization. Moreover given sufficient cryptographic strength, a cryptographic commitment such as a signature, digest, or another `SAID`, to a given `SAID` is essentially equivalent to a commitment to its associated serialization. Any change to the serialization invalidates its `SAID` thereby ensuring secure immutability evident reasoning with `SAIDs` about serializations or equivalently their `SAIDs`. Thus `SAIDs` better facilitate immutably referenced data serializations for applications such as Verifiable Credentials or Ricardian Contracts. 
 
 `SAIDs` are encoded with `CESR` (Composable Event Streaming Representation) which includes a pre-pended derivation code that encodes the cryptographic suite or algorithm used to generate the digest. A `CESR` primitive's primary expression (alone or in combination ) is textual using Base64 URL Safe characters. `CESR` primitives may be round-tripped (alone or in combination) to a compact binary representation without loss. The `CESR` derivation code enables cryptographic digest algorithm agility in systems that use `SAIDs` as content addresses. Each serialization may use a different cryptographic digest algorithm as indicated by its derivation code. This provides interoperable future proofing. `CESR` was developed for the [KERI] protocol.
 
@@ -51,7 +51,7 @@ The primary advantage of a content-addressable identifier is that it is cryptogr
 
 A `self-addressing identifier (SAID)` is a special class of content-addressable identifier that is also self-referential. This requires a special derivation protocol that generates the `SAID` and embeds it in the serialized content.  The reason for a special derivation protocol is that a naive cryptographic content-addressable identifier must not be self-referential, i.e. the identifier must not appear within the content that it is identifying. This is because the naive cryptographic derivation process of a content-addressable identifier is a cryptographic digest of the serialized content. Changing one bit of the serialization content will result in a different digest. Therefore, self-referential content-addressable identifiers require a special derivation protocol. 
 
-To elaborate, this approach of deriving self-referential identifiers from the contents they identify, is called `self-addressing`. It allows any validator to verify or re-derive the `self-referential, self-addressing identifier` given the contents it identifies. To clarify, a `SAID` is different from a standard content address or content-addressable identifier in that a standard content-addressable identifier may not be included inside the contents it addresses. Moreover, a standard content-addressable identifier is computed on the finished immutable contents, and therefore is not self-referential. In addition a `self-addressing identifier (SAID)` includes a pre-pended derivation code that specifies the cryptographic algorithm used to generate the digest.  
+To elaborate, this approach of deriving self-referential identifiers from the contents they identify, is called `self-addressing`. It allows any validator to verify or re-derive the `self-referential, self-addressing identifier` given the contents it identifies. To clarify, a `SAID` is different from a standard content address or content-addressable identifier in that a standard content-addressable identifier may not be included inside the contents it addresses. Moreover, a standard content-addressable identifier is computed on the finished immutable contents, and therefore is not self-referential. In addition a `self-addressing identifier (SAID)` includes a pre-pended derivation code that specifies the cryptographic algorithm used to generate the digest.
 
 An authenticatable data serialization is defined to be a serialization that is digitally signed with a non-repudiable asymmetric key-pair based signing scheme. A verifier, given the public key, may verify the signature on the serialization and thereby securely attribute the serialization to the signer. Many use cases of authenticatable data serializations or statements include a self-referential identifier embedded in the authenticatible serialization. These serializations may also embed references to other self-referential identifiers to other serializations. The purpose of a self-referential identifier is enable reasoning in software or otherwise about that serialization.  Typically these self-referential identifiers are not cryptographically bound to their encompassing serializations such as would be the case for a content-addressable identifier of that serialization. This poses a security problem because there now may be more that one identifer for the same content. The first is self-referential, included in the serialization, but not cryptographically bound to its encompassing serialization and the second is cryptographically bound but not self-referential, not included in the serialization. 
 
@@ -59,24 +59,24 @@ When reasoning about a given content serialization, the existence of a non-crypt
 
 # Generation and Verification Protocols
 
-The *self-addressing identifier* (SAID) generation protocol is as follows:
+The *self-addressing identifier* (`SAID`) generation protocol is as follows:
 
-- Insert a dummy string of the same length as the eventually derived and CESR encoded SAID into the SAID field of a serialization. The dummy character is `#`, that is, ASCII 35 decimal (23 hex).
-- Compute the digest of the serialization with the dummy value in the SAID field.
-- Encode the computed digest with CESR (text fully qualified Base64) to create the final derived and encoded SAID of the same total length as the dummy string. This includes the derivation code for the digest algorithm used to compute the digest.
-- Replace the dummy string in the serialization with the encoded SAID string.
+- Insert a dummy string of the same length as the eventually derived and `CESR` encoded `SAID` into the `SAID` field of a serialization. The dummy character is `#`, that is, ASCII 35 decimal (23 hex).
+- Compute the digest of the serialization with the dummy value in the `SAID` field.
+- Encode the computed digest with `CESR` (text fully qualified Base64) to create the final derived and encoded `SAID` of the same total length as the dummy string. This includes the derivation code for the digest algorithm used to compute the digest.
+- Replace the dummy string in the serialization with the encoded `SAID` string.
 
-The *self-addressing identifier* (SAID) verification protocol is as follows:
+The *self-addressing identifier* (`SAID`) verification protocol is as follows:
 
-- Make a copy of the embedded CESR encoded SAID string included in the serialization.
-- replace the SAID field value in the serialization with a dummy string of the same length. The dummy character is `#`, that is, ASCII 35 decimal (23 hex).
-- Compute the digest of the serialization that includes the dummy value for the SAID field. Use the digest algorithm specified by the CESR derivation code of the copied SAID.
-- Encode the computed digest with CESR (text fully qualified Base64) to create the final derived and encoded SAID of the same total length as the dummy string and the copied embedded SAID.
-- Compare the copied SAID with the recomputed SAID. If they are identical then the verification is successful; otherwise unsuccessful.
+- Make a copy of the embedded `CESR` encoded `SAID` string included in the serialization.
+- replace the `SAID` field value in the serialization with a dummy string of the same length. The dummy character is `#`, that is, ASCII 35 decimal (23 hex).
+- Compute the digest of the serialization that includes the dummy value for the `SAID` field. Use the digest algorithm specified by the `CESR` derivation code of the copied `SAID`.
+- Encode the computed digest with CESR (text fully qualified Base64) to create the final derived and encoded SAID of the same total length as the dummy string and the copied embedded `SAID`.
+- Compare the copied `SAID` with the recomputed `SAID`. If they are identical then the verification is successful; otherwise unsuccessful.
 
 
 ## Example Computation
-The `CESR` encoding of a Blake3-256 (32 byte) binary digest has 44 Base-64 URL Safe characters. The first character is `E` which represents Blake3-256. Therefore, a serialization of a fixed field data structure with a SAID generated by a Blake3-256 digest must reserve a field of length 44 characters. Suppose the initial value of the fixed field serialization is the following string:
+The `CESR` encoding of a Blake3-256 (32 byte) binary digest has 44 Base-64 URL Safe characters. The first character is `E` which represents Blake3-256. Therefore, a serialization of a fixed field data structure with a `SAID` generated by a Blake3-256 digest must reserve a field of length 44 characters. Suppose the initial value of the fixed field serialization is the following string:
 
 ~~~
 field0______field1______________________________________field2______
@@ -110,7 +110,7 @@ A very useful type of serialization especially in some languages like Python or 
 
 The *natural* canonical ordering for such mappings is *insertion order* or sometimes called *field creation order*. Natural order allows the fields to appear in a given preset order independent of the lexicographic ordering of the labels. This enables functional or logical ordering of the fields. Logical ordering also allows the absence or presence of a field to have meaning. Fields may have a priority given by their relative order of appearance. Fields may be grouped in logical sequence for better usability and labels may use words that best reflect their function independent of their relative lexicographic ordering. The most popular serialization format for mappings is *JSON*. Other popular serializations for mappings are CBOR and MsgPack. 
 
-In contract, from a functional perspective, lexicographic ordering appears un-natural. In lexicographic ordering the fields are sorted by label prior to serialization.  The problem with lexicographic ordering is that the relative order of appearance of the fields is determined by the labels themselves not some logical or functional purpose of the fields themselves. This often results in oddly labeled fields that are so named merely to ensure that the lexicographic ordering matches a given logical ordering. 
+In contrast, from a functional perspective, lexicographic ordering appears un-natural. In lexicographic ordering the fields are sorted by label prior to serialization.  The problem with lexicographic ordering is that the relative order of appearance of the fields is determined by the labels themselves not some logical or functional purpose of the fields themselves. This often results in oddly labeled fields that are so named merely to ensure that the lexicographic ordering matches a given logical ordering. 
 
 Originally mappings in most if not all computer languages were not insertion order preserving. The reason is that most mappings used hash tables under the hood. Early hash tables were highly efficient but by nature did not include any mechanism for preserving field creation or field insertion order for serialization. Fortunately this is no longer true in general. Most if not all computer languages that support dictionaries or mappings as first class data structures now support variations that are insertion order preserving. 
 
@@ -170,6 +170,48 @@ The final serialization may be converted to a python `dict` by deserializing the
 ~~~
 
 The generation steps may be reversed to verify the embedded `SAID`. The `SAID` generation and verification protocol for mappings assumes that the fields in a mapping serialization such as JSON are ordered in stable, round-trippable, reproducible order, i.e., canonical. The natural canonical ordering is called `field insertion order`. 
+
+## Example Schema Immutability using JSON Schema with SAIDs
+
+`SAIDs` make [JSON Schema](https://json-schema.org/draft/2020-12/json-schema-core.html) fully self-contained with self-referential, unambiguously cryptographically bound, and verifiable content-addressable identifiers. We apply the `SAID` derivation protocol defined above to generate the `$id` field.
+
+First, replace the value of the `$id` field with a string filled with dummy characters of the same length as the eventual derived value for `$id`. 
+
+~~~json
+    {
+        "$id": "############################################",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "full_name": {
+            "type": "string"
+        }
+    }
+~~~
+
+
+Second, make a digest of the serialized schema contents that include the dummy value for the `$id`. 
+
+~~~
+EZT9Idj7zLA0Ek6o8oevixdX20607CljNg4zrf_NQINY
+~~~
+
+Third, replace the dummy identifier value with the derived identifier value in the schema contents.
+
+~~~json
+    {
+        "$id": "EZT9Idj7zLA0Ek6o8oevixdX20607CljNg4zrf_NQINY",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+            "full_name": {
+            "type": "string"
+        }
+    }
+~~~
+
+Usages of `SAIDs` within authentic data containers as demonstrated here are referred to as `self-addressing data (SAD)`.
+
 
 ## Discussion
 As long as any verifier recognizes the derivation code of a `SAID`, the `SAID` is a cryptographically secure commitment to the contents in which it is embedded; it is a cryptographically verifiable, self-referential, content-addressable identifier. Because a `SAID` is both self-referential and cryptographically bound to the contents it identifies, anyone can validate this binding if they follow the _derivation protocol_ outlined above.
