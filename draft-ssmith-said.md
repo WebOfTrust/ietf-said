@@ -21,7 +21,15 @@ author:
     email: sam@prosapien.com  
 
 normative:  
-
+  CESR:
+    target: https://datatracker.ietf.org/doc/draft-ssmith-cesr/
+    title: Composable Event Streaming Representation (CESR)
+    author:
+      ins: S. Smith
+      name: Samuel M. Smith
+      org: ProSapien LLC
+    date: 2021
+    
 informative:  
   KERI:
     target: https://arxiv.org/abs/1907.02143
@@ -33,13 +41,14 @@ informative:
     date: 2021
 
 
-tags: IETF, SAID, ACDC, SAD
+
+tags: IETF, SAID, CESR, SAD, ACDC, KERI
 
 --- abstract 
 
 A `SAID` (Self-Addressing IDentifier) is a special type of content addressable identifier based on encoded cryptographic digest that is self-referential. The `SAID` derivation protocol defined herein enables verification that a given `SAID` is uniquely cryptographically bound to a serialization that includes the `SAID` as a field in that serialization. Embedding a `SAID` as a field in the associated serialization indicates a preferred content addressable identifier for that serialization that facilitates greater interoperability, reduced ambiguity, and enhanced security when reasoning about the serialization. Moreover given sufficient cryptographic strength, a cryptographic commitment such as a signature, digest, or another `SAID`, to a given `SAID` is essentially equivalent to a commitment to its associated serialization. Any change to the serialization invalidates its `SAID` thereby ensuring secure immutability evident reasoning with `SAIDs` about serializations or equivalently their `SAIDs`. Thus `SAIDs` better facilitate immutably referenced data serializations for applications such as Verifiable Credentials or Ricardian Contracts. 
 
-`SAIDs` are encoded with `CESR` (Composable Event Streaming Representation) which includes a pre-pended derivation code that encodes the cryptographic suite or algorithm used to generate the digest. A `CESR` primitive's primary expression (alone or in combination ) is textual using Base64 URL Safe characters. `CESR` primitives may be round-tripped (alone or in combination) to a compact binary representation without loss. The `CESR` derivation code enables cryptographic digest algorithm agility in systems that use `SAIDs` as content addresses. Each serialization may use a different cryptographic digest algorithm as indicated by its derivation code. This provides interoperable future proofing. `CESR` was developed for the [KERI] protocol.
+`SAIDs` are encoded with `CESR` (Composable Event Streaming Representation) [CESR] which includes a pre-pended derivation code that encodes the cryptographic suite or algorithm used to generate the digest. A `CESR` primitive's primary expression (alone or in combination ) is textual using Base64 URL Safe characters. `CESR` primitives may be round-tripped (alone or in combination) to a compact binary representation without loss. The `CESR` derivation code enables cryptographic digest algorithm agility in systems that use `SAIDs` as content addresses. Each serialization may use a different cryptographic digest algorithm as indicated by its derivation code. This provides interoperable future proofing. `CESR` was developed for the [KERI] protocol.
 
 
 
@@ -59,24 +68,18 @@ When reasoning about a given content serialization, the existence of a non-crypt
 
 # Generation and Verification Protocols
 
-The *self-addressing identifier* (`SAID`) generation protocol is as follows:
-
-- Insert a dummy string of the same length as the eventually derived and `CESR` encoded `SAID` into the `SAID` field of a serialization. The dummy character is `#`, that is, ASCII 35 decimal (23 hex).
-- Compute the digest of the serialization with the dummy value in the `SAID` field.
-- Encode the computed digest with `CESR` (text fully qualified Base64) to create the final derived and encoded `SAID` of the same total length as the dummy string. This includes the derivation code for the digest algorithm used to compute the digest.
-- Replace the dummy string in the serialization with the encoded `SAID` string.
-
 The *self-addressing identifier* (`SAID`) verification protocol is as follows:
 
-- Make a copy of the embedded `CESR` encoded `SAID` string included in the serialization.
+- Make a copy of the embedded `CESR` [CESR] encoded `SAID` string included in the serialization.
 - replace the `SAID` field value in the serialization with a dummy string of the same length. The dummy character is `#`, that is, ASCII 35 decimal (23 hex).
-- Compute the digest of the serialization that includes the dummy value for the `SAID` field. Use the digest algorithm specified by the `CESR` derivation code of the copied `SAID`.
-- Encode the computed digest with CESR (text fully qualified Base64) to create the final derived and encoded SAID of the same total length as the dummy string and the copied embedded `SAID`.
+- Compute the digest of the serialization that includes the dummy value for the `SAID` field. Use the digest algorithm specified by the `CESR` [CESR] derivation code of the copied `SAID`.
+- Encode the computed digest with CESR [CESR] to create the final derived and encoded SAID of the same total length as the dummy string and the copied embedded `SAID`.
 - Compare the copied `SAID` with the recomputed `SAID`. If they are identical then the verification is successful; otherwise unsuccessful.
 
 
 ## Example Computation
-The `CESR` encoding of a Blake3-256 (32 byte) binary digest has 44 Base-64 URL Safe characters. The first character is `E` which represents Blake3-256. Therefore, a serialization of a fixed field data structure with a `SAID` generated by a Blake3-256 digest must reserve a field of length 44 characters. Suppose the initial value of the fixed field serialization is the following string:
+The `CESR` [CESR] encoding of a Blake3-256 (32 byte) binary digest has 44 Base-64 URL Safe characters. The first character is `E` which represents Blake3-256. Therefore, a serialization of a fixed field data structure with a SAID generated by a Blake3-256 digest must reserve a field of length 44 characters. Suppose the initial value of the fixed field serialization is the following string:
+
 
 ~~~
 field0______field1______________________________________field2______
