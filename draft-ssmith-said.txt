@@ -4,8 +4,8 @@
 
 TODO Working Group                                              S. Smith
 Internet-Draft                                             ProSapien LLC
-Intended status: Informational                          28 November 2021
-Expires: 1 June 2022
+Intended status: Informational                               26 May 2022
+Expires: 27 November 2022
 
 
                    Self-Addressing IDentifier (SAID)
@@ -13,16 +13,16 @@ Expires: 1 June 2022
 
 Abstract
 
-   A SAID (Self-Addressing IDentifier) is a special type of content
+   A SAID (Self-Addressing IDentifier) is a special type of content-
    addressable identifier based on encoded cryptographic digest that is
    self-referential.  The SAID derivation protocol defined herein
    enables verification that a given SAID is uniquely cryptographically
    bound to a serialization that includes the SAID as a field in that
    serialization.  Embedding a SAID as a field in the associated
-   serialization indicates a preferred content addressable identifier
+   serialization indicates a preferred content-addressable identifier
    for that serialization that facilitates greater interoperability,
    reduced ambiguity, and enhanced security when reasoning about the
-   serialization.  Moreover given sufficient cryptographic strength, a
+   serialization.  Moreover, given sufficient cryptographic strength, a
    cryptographic commitment such as a signature, digest, or another
    SAID, to a given SAID is essentially equivalent to a commitment to
    its associated serialization.  Any change to the serialization
@@ -36,7 +36,7 @@ Abstract
    Representation) [CESR] which includes a pre-pended derivation code
    that encodes the cryptographic suite or algorithm used to generate
    the digest.  A CESR primitive's primary expression (alone or in
-   combination ) is textual using Base64 URL Safe characters.  CESR
+   combination ) is textual using Base64 URL-safe characters.  CESR
    primitives may be round-tripped (alone or in combination) to a
    compact binary representation without loss.  The CESR derivation code
    enables cryptographic digest algorithm agility in systems that use
@@ -67,11 +67,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 1 June 2022.
+   This Internet-Draft will expire on 27 November 2022.
 
 Copyright Notice
 
-   Copyright (c) 2021 IETF Trust and the persons identified as the
+   Copyright (c) 2022 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -89,8 +89,8 @@ Table of Contents
    2.  Generation and Verification Protocols
      2.1.  Example Computation
      2.2.  Serialization Generation
-       2.2.1.  Order Preserving Data Structures
-     2.3.  Example Python dict to JSON Serializaion with SAID
+       2.2.1.  Order-Preserving Data Structures
+     2.3.  Example Python dict to JSON Serialization with SAID
      2.4.  Example Schema Immutability using JSON Schema with SAIDs
      2.5.  Discussion
    3.  Conventions and Definitions
@@ -133,7 +133,7 @@ Table of Contents
    identifier may not be included inside the contents it addresses.
    Moreover, a standard content-addressable identifier is computed on
    the finished immutable contents, and therefore is not self-
-   referential.  In addition a self-addressing identifier (SAID)
+   referential.  In addition, a self-addressing identifier (SAID)
    includes a pre-pended derivation code that specifies the
    cryptographic algorithm used to generate the digest.
 
@@ -143,41 +143,41 @@ Table of Contents
    public key, may verify the signature on the serialization and thereby
    securely attribute the serialization to the signer.  Many use cases
    of authenticatable data serializations or statements include a self-
-   referential identifier embedded in the authenticatible serialization.
+   referential identifier embedded in the authenticatable serialization.
    These serializations may also embed references to other self-
    referential identifiers to other serializations.  The purpose of a
-   self-referential identifier is enable reasoning in software or
-   otherwise about that serialization.  Typically these self-referential
-   identifiers are not cryptographically bound to their encompassing
-   serializations such as would be the case for a content-addressable
-   identifier of that serialization.  This poses a security problem
-   because there now may be more that one identifer for the same
-   content.  The first is self-referential, included in the
+   self-referential identifier is to enable reasoning in software or
+   otherwise about that serialization.  Typically, these self-
+   referential identifiers are not cryptographically bound to their
+   encompassing serializations such as would be the case for a content-
+   addressable identifier of that serialization.  This poses a security
+   problem because there now may be more than one identifier for the
+   same content.  The first is self-referential, included in the
    serialization, but not cryptographically bound to its encompassing
    serialization and the second is cryptographically bound but not self-
    referential, not included in the serialization.
 
    When reasoning about a given content serialization, the existence of
    a non-cryptographically bound but self-referential identifier is a
-   security vulnerability.  Certainly this identifier cannot be used by
+   security vulnerability.  Certainly, this identifier cannot be used by
    itself to securely reason about the content because it is not bound
-   to the content.  Anyone can place such an identifier inside a some
+   to the content.  Anyone can place such an identifier inside some
    other serialization and claim that the other serialization is the
    correct serialization for that self-referential identifier.
-   Unfortunately, a standard content addressable identifier for a
+   Unfortunately, a standard content-addressable identifier for a
    serialization which is bound to the serialization can not be included
-   in the serialization itself, i.e. cannot be self-referential nor
-   self-containe.  It must be tracked independently.  In contrast, a
+   in the serialization itself, i.e. can be neither self-referential nor
+   self-contained; it must be tracked independently.  In contrast, a
    self-addressing identifier is included in the serialization to which
    it is cryptographically bound making it self-referential and self-
    contained.  Reasoning about self-addressing identifiers (SAIDs) is
-   secure because a SAID will only verify if and only if its
-   encompassing serialization has not been mutated (i.e. is immutable).
-   SAIDs used as references to serializations in other serialization
-   enable tamper evident reasoning about the referenced serializations.
-   This enables a more compact representation of an authenticatable data
-   serialization that includes other serializations by reference to
-   their SAIDs instead of by embedded containment.
+   secure because a SAID will verify if and only if its encompassing
+   serialization has not been mutated, which makes the content
+   immutable.  SAIDs used as references to serializations in other
+   serializations enable tamper-evident reasoning about the referenced
+   serializations.  This enables a more compact representation of an
+   authenticatable data serialization that includes other serializations
+   by reference to their SAIDs instead of by embedded containment.
 
 2.  Generation and Verification Protocols
 
@@ -206,7 +206,7 @@ Table of Contents
 2.1.  Example Computation
 
    The CESR [CESR] encoding of a Blake3-256 (32 byte) binary digest has
-   44 Base-64 URL Safe characters.  The first character is E which
+   44 Base-64 URL-safe characters.  The first character is E which
    represents Blake3-256.  Therefore, a serialization of a fixed field
    data structure with a SAID generated by a Blake3-256 digest must
    reserve a field of length 44 characters.  Suppose the initial value
@@ -221,13 +221,13 @@ Table of Contents
 
    field0______############################################field2______
 
-   The Blake2-256 digest is then computed on the above string and
+   The Blake3-256 digest is then computed on the above string and
    encoded in CESR format.  This gives the following SAID:
 
    E8wYuBjhslETYaLZcxMkWrhVbMcA8RS1pKYl7nJ77ntA
 
-   The dummy string is then replaced with the SAID above to generated
-   the final serialization with embedded SAID as follows:
+   The dummy string is then replaced with the SAID above to produce the
+   final serialization with embedded SAID as follows:
 
    field0______E8wYuBjhslETYaLZcxMkWrhVbMcA8RS1pKYl7nJ77ntA______
 
@@ -236,7 +236,7 @@ Table of Contents
 
 2.2.  Serialization Generation
 
-2.2.1.  Order Preserving Data Structures
+2.2.1.  Order-Preserving Data Structures
 
    The crucial consideration in SAID generation is reproducibility.
    This requires the ordering and sizing of fields in the serialization
@@ -256,8 +256,8 @@ Table of Contents
 
    The _natural_ canonical ordering for such mappings is _insertion
    order_ or sometimes called _field creation order_. Natural order
-   allows the fields to appear in a given preset order independent of
-   the lexicographic ordering of the labels.  This enables functional or
+   allows the fields to appear in a preset order independent of the
+   lexicographic ordering of the labels.  This enables functional or
    logical ordering of the fields.  Logical ordering also allows the
    absence or presence of a field to have meaning.  Fields may have a
    priority given by their relative order of appearance.  Fields may be
@@ -272,7 +272,7 @@ Table of Contents
    by label prior to serialization.  The problem with lexicographic
    ordering is that the relative order of appearance of the fields is
    determined by the labels themselves not some logical or functional
-   purpose of the fields themselves.  This often results in oddly
+   purpose of the fields themselves.  This often results in oddly-
    labeled fields that are so named merely to ensure that the
    lexicographic ordering matches a given logical ordering.
 
@@ -280,23 +280,23 @@ Table of Contents
    insertion order preserving.  The reason is that most mappings used
    hash tables under the hood.  Early hash tables were highly efficient
    but by nature did not include any mechanism for preserving field
-   creation or field insertion order for serialization.  Fortunately
+   creation or field insertion order for serialization.  Fortunately,
    this is no longer true in general.  Most if not all computer
-   languages that support dictionaries or mappings as first class data
+   languages that support dictionaries or mappings as first-class data
    structures now support variations that are insertion order
    preserving.
 
-   For example since version 3.6 the default dict object in Python is
-   insertion order preserving.  Before that Python 3.1 introduced the
-   OrderedDict class which is insertion order preserving and before that
-   custom classes existed in the wild for order preserving variants of a
-   Python dict.  Since version 1.9 the Ruby version of a dict, the Hash
-   class is insertion order preserving.  Javascript is a relative
-   latecomer but since ECMAScript ES6 the insertion ordering of
+   For example, since version 3.6 the default dict object in Python is
+   insertion order preserving.  Before that, Python 3.1 introduced the
+   OrderedDict class which is insertion order preserving, and before
+   that, custom classes existed in the wild for order preserving
+   variants of a Python dict.  Since version 1.9 the Ruby version of a
+   dict, the Hash class, is insertion order preserving.  Javascript is a
+   relative latecomer but since ECMAScript ES6 the insertion ordering of
    JavaScript objects was preserved in Reflect.ownPropertyKeys().  Using
    custom replacer and reviver functions in .stringify and .parse allows
    one to serialize and de-serialize JavaScript objects in insertion
-   order.  Moreover since ES11 the native .stringify uses insertion
+   order.  Moreover, since ES11 the native .stringify uses insertion
    order all text string labeled fields in Javascript objects.  It is an
    uncommon use case to have non-text string labels in a mapping
    serialization.  A list is usually a better structure in those cases.
@@ -304,11 +304,11 @@ Table of Contents
    insertion order for all fields for all label types.  Custom replacer
    and reviver functions for .stringify and .parse allows one to
    serialize and de-serialize Map objects to/from JSON in natural order
-   preserving fashion.  Consequently there is no need for any canonical
+   preserving fashion.  Consequently, there is no need for any canonical
    serialization but natural insertion order preserving because one can
    always use lexicographic ordering to create the insertion order.
 
-2.3.  Example Python dict to JSON Serializaion with SAID
+2.3.  Example Python dict to JSON Serialization with SAID
 
    Suppose the initial value of a Python dict is as follows:
 
@@ -316,20 +316,20 @@ Table of Contents
        "said": "",
        "first": "Sue",
        "last": "Smith",
-       "role": "Founder",
+       "role": "Founder"
    }
 
-   As before the SAID will be a 44 character CESR encoded Blake-256
+   As before the SAID will be a 44 character CESR encoded Blake3-256
    digest.  The serialization will be _JSON_. The said field value in
    the dict is to be populated with the resulting SAID.  First the value
    of the said field is replaced with a 44 character dummy string as
    follows:
 
    {
-       'said': '############################################',
-       'first': 'Sue',
-       'last': 'Smith',
-       'role': 'Founder',
+       "said": "############################################",
+       "first": "Sue",
+       "last": "Smith",
+       "role": "Founder"
    }
 
    The dict is then serialized into JSON with no extra whitespace.  The
@@ -352,10 +352,10 @@ Table of Contents
    deserializing the JSON to produce:
 
    {
-       'said': 'EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk',
-       'first': 'Sue',
-       'last': 'Smith',
-       'role': 'Founder'
+       "said": "EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk",
+       "first": "Sue",
+       "last": "Smith",
+       "role": "Founder"
    }
 
    The generation steps may be reversed to verify the embedded SAID.
@@ -474,5 +474,4 @@ Author's Address
 
    S. Smith
    ProSapien LLC
-
    Email: sam@prosapien.com
