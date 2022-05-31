@@ -222,6 +222,19 @@ As long as any verifier recognizes the derivation code of a `SAID`, the `SAID` i
 
 To elaborate, this approach of deriving self-referential identifiers from the contents they identify, is called `self-addressing`. It allows any validator to verify or re-derive the self-referential, self-addressing identifier given the contents it identifies. To clarify, a `SAID` is different from a standard content address or content-addressable identifier in that a standard content-addressable identifier may not be included inside the contents it addresses. Moreover, a standard content-addressable identifier is computed on the finished immutable contents, and therefore is not self-referential.
 
+# Appendix: Embedding SAIDs in URLs
+
+ToDo. Provide normative protocol for embedding a SAID in a URL to replace a
+bare SAID in a data structure (field map). The purpose is to ease the transition
+from web 2.0 URL centric infrastructure to zero-trust infrastructure. This is
+a caveated adoption vector because it mixes discovery (URL) with integrity (SAID)
+layers. The OOBI protocol is an example of using embedded SAIDs inside URLs merely for
+verifiable discovery while using the bare SAID in the discovered data item.
+
+
+# Appendix: JSON Schema with SAIDs
+
+ToDo. Provide normative rules for using SAIDs to lock-down JSON Schema (immutable) to prevent schema malleability attacks.
 
 # Conventions and Definitions
 
