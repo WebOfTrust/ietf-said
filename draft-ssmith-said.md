@@ -39,6 +39,16 @@ informative:
         name: Samuel M. Smith
         org: ProSapien LLC
     date: 2021
+    
+  URNSAID:
+    target: https://www.iana.org/assignments/urn-namespaces/urn-formal/said
+    title: urn said namespace registration
+    author:
+        ins: W. Chu
+        name: Wenjing Chu
+        org: Future Wei
+    date: 2026
+
 
 
 
@@ -65,6 +75,8 @@ To elaborate, this approach of deriving self-referential identifiers from the co
 An authenticatable data serialization is defined to be a serialization that is digitally signed with a non-repudiable asymmetric key-pair based signing scheme. A verifier, given the public key, may verify the signature on the serialization and thereby securely attribute the serialization to the signer. Many use cases of authenticatable data serializations or statements include a self-referential identifier embedded in the authenticatable serialization. These serializations may also embed references to other self-referential identifiers to other serializations. The purpose of a self-referential identifier is to enable reasoning in software or otherwise about that serialization.  Typically, these self-referential identifiers are not cryptographically bound to their encompassing serializations such as would be the case for a content-addressable identifier of that serialization. This poses a security problem because there now may be more than one identifier for the same content. The first is self-referential, included in the serialization, but not cryptographically bound to its encompassing serialization and the second is cryptographically bound but not self-referential, not included in the serialization.
 
 When reasoning about a given content serialization, the existence of a non-cryptographically bound but self-referential identifier is a security vulnerability. Certainly, this identifier cannot be used by itself to securely reason about the content because it is not bound to the content. Anyone can place such an identifier inside some other serialization and claim that the other serialization is the correct serialization for that self-referential identifier.  Unfortunately, a standard content-addressable identifier for a serialization which is bound to the serialization can not be included in the serialization itself, i.e. can be neither self-referential nor self-contained; it must be tracked independently. In contrast, a `self-addressing identifier` is included in the serialization to which it is cryptographically bound making it self-referential and self-contained. Reasoning about `self-addressing identifiers (SAIDs)` is secure because a `SAID` will verify if and only if its encompassing serialization has not been mutated, which makes the content immutable. `SAIDs` used as references to serializations in other serializations enable tamper-evident reasoning about the referenced serializations. This enables a more compact representation of an authenticatable data serialization that includes other serializations by reference to their `SAIDs` instead of by embedded containment.
+
+he urn said is now a registered namespace at IANA [URNSAID].
 
 # Generation and Verification Protocols
 
