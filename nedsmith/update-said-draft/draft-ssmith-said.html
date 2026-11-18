@@ -8,10 +8,11 @@
 <meta content="S. Smith" name="author">
 <meta content="N. Smith" name="author">
 <meta content="
-       A Self-Addressing IDentifier ( SAID ) is a content-addressable identifier that is cryptographically bound to a deterministic serialization and can be embedded within the structure it identifies. Embedding a preferred content address in the associated structure reduces ambiguity and supports interoperable, tamper-evident reasoning. Derivation replaces the identifier field with a defined placeholder, deterministically serializes the structure, computes a cryptographic digest, and encodes that digest as the identifier. Verification repeats these steps, so any change to the serialization invalidates the identifier. 
-       Given sufficient cryptographic strength and successful verification under the identified derivation and serialization profile, a signature, digest, or another  SAID  that commits to a  SAID  also commits to the serialization identified by it. Applications can therefore reference immutable data compactly by identifier rather than embedding the entire structure. Examples include Verifiable Credentials, Ricardian Contracts, schemas, and other authenticatable data structures. 
-       Reproducibility depends on a deterministic wire-to-memory-to-wire round trip. A receiver decodes bytes from a deterministic wire format into an in-memory value that preserves every serialization-relevant distinction; re-encoding under the same profile reproduces the identical byte sequence. Ordered mappings, deterministic  CBOR , and ASN.1  DER  illustrate approaches that provide this stability. The identifier representation also indicates or is associated with the digest algorithm, supporting cryptographic agility and future evolution. 
-       This document describes the native  CESR  realization and profiles comparable deterministic content-addressing and cryptographic-commitment properties for  COSE / CBOR  and  JOSE / JSON . The  COSE  realization uses an   hash envelope whose payload is the digest of deterministic  CBOR  data. The  JOSE  realization omits the  JWS  payload and carries the digest in a critical protected-header parameter defined by the profile.  CDDL  and  JSON  examples apply both envelope approaches to the same application structure. These  SAID -like constructions are distinguished from a natively self-referential  SAID  and require additional embedding and derivation rules to obtain self-reference. 
+       A  SAID  (Self-Addressing IDentifier) is a self-referential, content-addressable identifier cryptographically bound to a deterministic serialization that contains the identifier as a field. Derivation replaces that field with a same-length placeholder, computes a digest over the resulting serialization, and encodes the digest as the  SAID . Verification repeats the process; a mutation causes verification to fail, assuming the digest algorithm remains collision-resistant. Embedding a preferred content address in the serialization reduces ambiguity and supports interoperable, tamper-evident reasoning. 
+       Given sufficient cryptographic strength and successful verification under the same derivation and serialization profile, a signature, digest, or other  SAID  that commits to a  SAID  also commits to the serialization it identifies.  SAIDs  therefore support compact references to immutable data, including Verifiable Credentials, Ricardian Contracts, schemas, and other authenticatable data structures. 
+       SAIDs  are encoded with  CESR  (Composable Event Streaming Representation)  . A  CESR  derivation code identifies the cryptographic suite or digest algorithm. A  CESR  primitive's primary expression is textual and uses Base64 URL-safe characters; primitives can also be round-tripped to a compact binary representation without loss. Because each serialization can indicate its own digest algorithm,  CESR  supports cryptographic agility.  CESR  was developed for the   protocol. 
+       Reproducible derivation requires a deterministic wire-to-memory-to-wire round trip: decoding must preserve every distinction that affects serialization, and re-encoding under the same profile must reproduce the same bytes. Ordered mappings, deterministic  CBOR , and ASN.1  DER  are examples of ways to achieve this. 
+       This document describes the native, self-referential  CESR  realization and profiles related content-addressing and cryptographic-commitment properties for  COSE / CBOR  and  JOSE / JSON . The  COSE  profile uses the   hash envelope with a digest of deterministic  CBOR . The  JOSE  profile omits the  JWS  payload and carries the digest in a critical protected-header parameter; its JSON examples use the JSON Canonicalization Scheme  . These  SAID -like constructions are not natively self-referential: additional embedding and derivation rules are needed to obtain that property. 
     " name="description">
 <meta content="xml2rfc 3.35.0" name="generator">
 <meta content="Internet-Draft" name="keyword">
@@ -1084,10 +1085,11 @@ svg {
 <h1 id="title">Self-Addressing IDentifier (SAID)</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">A Self-Addressing IDentifier (<code>SAID</code>) is a content-addressable identifier that is cryptographically bound to a deterministic serialization and can be embedded within the structure it identifies. Embedding a preferred content address in the associated structure reduces ambiguity and supports interoperable, tamper-evident reasoning. Derivation replaces the identifier field with a defined placeholder, deterministically serializes the structure, computes a cryptographic digest, and encodes that digest as the identifier. Verification repeats these steps, so any change to the serialization invalidates the identifier.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">Given sufficient cryptographic strength and successful verification under the identified derivation and serialization profile, a signature, digest, or another <code>SAID</code> that commits to a <code>SAID</code> also commits to the serialization identified by it. Applications can therefore reference immutable data compactly by identifier rather than embedding the entire structure. Examples include Verifiable Credentials, Ricardian Contracts, schemas, and other authenticatable data structures.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
-<p id="section-abstract-3">Reproducibility depends on a deterministic wire-to-memory-to-wire round trip. A receiver decodes bytes from a deterministic wire format into an in-memory value that preserves every serialization-relevant distinction; re-encoding under the same profile reproduces the identical byte sequence. Ordered mappings, deterministic <code>CBOR</code>, and ASN.1 <code>DER</code> illustrate approaches that provide this stability. The identifier representation also indicates or is associated with the digest algorithm, supporting cryptographic agility and future evolution.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
-<p id="section-abstract-4">This document describes the native <code>CESR</code> realization and profiles comparable deterministic content-addressing and cryptographic-commitment properties for <code>COSE</code>/<code>CBOR</code> and <code>JOSE</code>/<code>JSON</code>. The <code>COSE</code> realization uses an <span>[<a href="#RFC9995" class="cite xref">RFC9995</a>]</span> hash envelope whose payload is the digest of deterministic <code>CBOR</code> data. The <code>JOSE</code> realization omits the <code>JWS</code> payload and carries the digest in a critical protected-header parameter defined by the profile. <code>CDDL</code> and <code>JSON</code> examples apply both envelope approaches to the same application structure. These <code>SAID</code>-like constructions are distinguished from a natively self-referential <code>SAID</code> and require additional embedding and derivation rules to obtain self-reference.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">A <code>SAID</code> (Self-Addressing IDentifier) is a self-referential, content-addressable identifier cryptographically bound to a deterministic serialization that contains the identifier as a field. Derivation replaces that field with a same-length placeholder, computes a digest over the resulting serialization, and encodes the digest as the <code>SAID</code>. Verification repeats the process; a mutation causes verification to fail, assuming the digest algorithm remains collision-resistant. Embedding a preferred content address in the serialization reduces ambiguity and supports interoperable, tamper-evident reasoning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">Given sufficient cryptographic strength and successful verification under the same derivation and serialization profile, a signature, digest, or other <code>SAID</code> that commits to a <code>SAID</code> also commits to the serialization it identifies. <code>SAIDs</code> therefore support compact references to immutable data, including Verifiable Credentials, Ricardian Contracts, schemas, and other authenticatable data structures.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-3"><code>SAIDs</code> are encoded with <code>CESR</code> (Composable Event Streaming Representation) <span>[<a href="#CESR" class="cite xref">CESR</a>]</span>. A <code>CESR</code> derivation code identifies the cryptographic suite or digest algorithm. A <code>CESR</code> primitive's primary expression is textual and uses Base64 URL-safe characters; primitives can also be round-tripped to a compact binary representation without loss. Because each serialization can indicate its own digest algorithm, <code>CESR</code> supports cryptographic agility. <code>CESR</code> was developed for the <span>[<a href="#KERI" class="cite xref">KERI</a>]</span> protocol.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
+<p id="section-abstract-4">Reproducible derivation requires a deterministic wire-to-memory-to-wire round trip: decoding must preserve every distinction that affects serialization, and re-encoding under the same profile must reproduce the same bytes. Ordered mappings, deterministic <code>CBOR</code>, and ASN.1 <code>DER</code> are examples of ways to achieve this.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
+<p id="section-abstract-5">This document describes the native, self-referential <code>CESR</code> realization and profiles related content-addressing and cryptographic-commitment properties for <code>COSE</code>/<code>CBOR</code> and <code>JOSE</code>/<code>JSON</code>. The <code>COSE</code> profile uses the <span>[<a href="#RFC9995" class="cite xref">RFC9995</a>]</span> hash envelope with a digest of deterministic <code>CBOR</code>. The <code>JOSE</code> profile omits the <code>JWS</code> payload and carries the digest in a critical protected-header parameter; its JSON examples use the JSON Canonicalization Scheme <span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>. These <code>SAID</code>-like constructions are not natively self-referential: additional embedding and derivation rules are needed to obtain that property.<a href="#section-abstract-5" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-discussion-venues">
@@ -1163,13 +1165,16 @@ svg {
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.3">
-                <p id="section-toc.1-1.2.2.3.1"><a href="#section-2.3" class="auto internal xref">2.3</a>.  <a href="#name-example-ordered-mapping-to-" class="internal xref">Example Ordered Mapping to JSON Serialization with SAID</a></p>
+                <p id="section-toc.1-1.2.2.3.1"><a href="#section-2.3" class="auto internal xref">2.3</a>.  <a href="#name-example-python-dict-to-json" class="internal xref">Example Python dict to JSON Serialization with SAID</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.4">
-                <p id="section-toc.1-1.2.2.4.1"><a href="#section-2.4" class="auto internal xref">2.4</a>.  <a href="#name-example-schema-immutability" class="internal xref">Example Schema Immutability Using JSON Schema with SAIDs</a></p>
+                <p id="section-toc.1-1.2.2.4.1"><a href="#section-2.4" class="auto internal xref">2.4</a>.  <a href="#name-example-ordered-mapping-to-" class="internal xref">Example Ordered Mapping to JSON Serialization with SAID</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.5">
-                <p id="section-toc.1-1.2.2.5.1"><a href="#section-2.5" class="auto internal xref">2.5</a>.  <a href="#name-discussion" class="internal xref">Discussion</a></p>
+                <p id="section-toc.1-1.2.2.5.1"><a href="#section-2.5" class="auto internal xref">2.5</a>.  <a href="#name-example-schema-immutability" class="internal xref">Example Schema Immutability Using JSON Schema with SAIDs</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.6">
+                <p id="section-toc.1-1.2.2.6.1"><a href="#section-2.6" class="auto internal xref">2.6</a>.  <a href="#name-discussion" class="internal xref">Discussion</a></p>
 </li>
             </ul>
 </li>
@@ -1213,21 +1218,24 @@ svg {
             <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-appendix-embedding-saids-in" class="internal xref">Appendix: Embedding SAIDs in URLs</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-references" class="internal xref">References</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
-                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-appendix-json-schema-with-s" class="internal xref">Appendix: JSON Schema with SAIDs</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
 </li>
             </ul>
 </li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
-</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1238,13 +1246,14 @@ svg {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">A content-addressable identifier is derived from the bytes of a serialization and is therefore cryptographically bound to those bytes. This binding provides a root of trust for reasoning about the serialization: a sufficiently strong cryptographic commitment to the identifier is functionally equivalent to a commitment to the identified serialization.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">A self-addressing identifier (<code>SAID</code>) adds self-reference to content addressing by embedding the identifier within the serialization it identifies. Directly hashing a serialization that already contains its own digest creates a circular dependency, so <code>SAID</code> derivation uses a defined placeholder for the identifier field. The placeholder form is deterministically serialized and hashed, and the resulting encoded digest replaces the placeholder.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">A standard content address is computed from completed content and is normally maintained outside that content. A <code>SAID</code> is instead both cryptographically bound to and carried within its serialization, making the preferred identifier self-contained. The identifier representation also conveys or is associated with the digest algorithm used during derivation, enabling algorithm agility.<a href="#section-1-3" class="pilcrow">¶</a></p>
-<p id="section-1-4">An authenticatable data serialization is digitally signed so that a verifier can attribute it to the signer using the corresponding public key. Such serializations often contain identifiers for themselves or references to other serializations. If those identifiers are merely labels, an attacker can reuse the same label in altered content without detection.<a href="#section-1-4" class="pilcrow">¶</a></p>
-<p id="section-1-5">A <code>SAID</code> removes this ambiguity by binding the embedded identifier to the serialization that contains it. Verification succeeds only when the serialization reproduces the bytes used during derivation; a mutation produces a different identifier. References to other serializations by <code>SAID</code> therefore support compact, tamper-evident composition without embedding each referenced serialization in full.<a href="#section-1-5" class="pilcrow">¶</a></p>
-<p id="section-1-6">The urn said is now a registered namespace at IANA <span>[<a href="#URNSAID" class="cite xref">URNSAID</a>]</span>.
-The urn said namespace uses the SAID protocol.<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-1">A content-addressable identifier is derived from a serialization and is cryptographically bound to its bytes. This binding provides a root of trust for reasoning about the content: a sufficiently strong cryptographic commitment to the identifier is functionally equivalent to a commitment to the serialization.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">A <code>self-addressing identifier (SAID)</code> is a content-addressable identifier that is also self-referential: it is included in the serialization it identifies. Directly hashing a serialization that contains its own digest creates a circular dependency, and changing any part of the serialized content changes its digest. <code>SAID</code> derivation resolves this by replacing the identifier field with a same-length placeholder, hashing the resulting serialization, and replacing the placeholder with the encoded digest. A verifier can repeat these steps to verify or re-derive the identifier.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">This derivation of an identifier from the content it identifies is called <code>self-addressing</code>. A conventional content address is computed over completed content and is normally maintained outside that content; it cannot simply be embedded in the content it identifies. A <code>SAID</code>, by contrast, is both embedded in and cryptographically bound to its serialization. Its <code>CESR</code> derivation code identifies the digest algorithm used to create it.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">An authenticatable data serialization is digitally signed using a non-repudiable asymmetric-key signature scheme. A verifier with the corresponding public key can validate the signature and attribute the serialization to its signer. Such serializations may contain self-referential identifiers and references to other serializations. An unbound identifier is only a label: anyone can copy it into different content and claim that content is the one it identifies. This can leave the same data with two identifiers—a self-referential but unbound label and an externally tracked content address.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-5">A <code>SAID</code> binds the embedded identifier to the serialization that contains it, resolving that ambiguity: successful verification shows that the serialization has not been changed, subject to the digest algorithm's security. References to other serializations by <code>SAID</code> provide compact, tamper-evident composition without embedding each referenced serialization in full.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">Reproducible verification depends on a deterministic serialization profile. Decoding and re-encoding must preserve every distinction that affects the bytes being hashed, including field order and value representation. The same profile must be used for derivation and verification.<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-7">The urn said is now a registered namespace at IANA <span>[<a href="#URNSAID" class="cite xref">URNSAID</a>]</span>.
+The urn said namespace uses the SAID protocol.<a href="#section-1-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="generation-and-verification-protocols">
@@ -1313,48 +1322,95 @@ field0______E8wYuBjhslETYaLZcxMkWrhVbMcA8RS1pKYl7nJ77ntA______
 </div>
 </section>
 </div>
-<div id="example-ordered-mapping-to-json-serialization-with-said">
+<div id="example-python-dict-to-json-serialization-with-said">
 <section id="section-2.3">
-        <h3 id="name-example-ordered-mapping-to-">
-<a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-example-ordered-mapping-to-" class="section-name selfRef">Example Ordered Mapping to JSON Serialization with SAID</a>
+        <h3 id="name-example-python-dict-to-json">
+<a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-example-python-dict-to-json" class="section-name selfRef">Example Python dict to JSON Serialization with SAID</a>
         </h3>
-<p id="section-2.3-1">The following example uses a Python dictionary only as a concrete instance of a deterministic, insertion-ordered in-memory mapping. The same derivation applies to any representation that preserves the specified field order and value types:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
-<p id="section-2.3-2"><code>json
-{"said":"","first":"Sue","last":"Smith","role":"Founder"}
+<p id="section-2.3-1">Suppose the initial value of a Python <code>dict</code> is as follows:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
+<p id="section-2.3-2"><code>python
+{
+    "said": "",
+    "first": "Sue",
+    "last": "Smith",
+    "role": "Founder"
+}
 </code><a href="#section-2.3-2" class="pilcrow">¶</a></p>
-<p id="section-2.3-3">Replace "said" with a 44-character placeholder and serialize without extra whitespace:<a href="#section-2.3-3" class="pilcrow">¶</a></p>
-<p id="section-2.3-4"><code>json
-{"said":"############################################","first":"Sue","last":"Smith","role":"Founder"}
+<p id="section-2.3-3">As before, the <code>SAID</code> will be a 44-character CESR-encoded Blake3-256 digest. The serialization will be <code>JSON</code>. The <code>said</code> field value in the <code>dict</code> is to be populated with the resulting <code>SAID</code>. First the value of the <code>said</code> field is replaced with a 44-character dummy string:<a href="#section-2.3-3" class="pilcrow">¶</a></p>
+<p id="section-2.3-4"><code>python
+{
+    "said": "############################################",
+    "first": "Sue",
+    "last": "Smith",
+    "role": "Founder"
+}
 </code><a href="#section-2.3-4" class="pilcrow">¶</a></p>
-<p id="section-2.3-5"><code>Blake3-256</code> over those <code>JSON</code> bytes, encoded with <code>CESR</code>, produces EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk. Replacing the placeholder produces:<a href="#section-2.3-5" class="pilcrow">¶</a></p>
+<p id="section-2.3-5">The <code>dict</code> is then serialized into JSON with no extra whitespace:<a href="#section-2.3-5" class="pilcrow">¶</a></p>
 <p id="section-2.3-6"><code>json
-{"said":"EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk","first":"Sue","last":"Smith","role":"Founder"}
+{"said":"############################################","first":"Sue","last":"Smith","role":"Founder"}
 </code><a href="#section-2.3-6" class="pilcrow">¶</a></p>
-<p id="section-2.3-7">Verification restores the placeholder, reproduces the same <code>JSON</code> bytes, and recomputes the <code>SAID</code>.<a href="#section-2.3-7" class="pilcrow">¶</a></p>
+<p id="section-2.3-7">The Blake3-256 digest is computed on that serialization and encoded in <code>CESR</code> to provide the <code>SAID</code>:<a href="#section-2.3-7" class="pilcrow">¶</a></p>
+<p id="section-2.3-8"><code>
+EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk
+</code><a href="#section-2.3-8" class="pilcrow">¶</a></p>
+<p id="section-2.3-9">The value of the <code>said</code> field is replaced with the computed and encoded <code>SAID</code>:<a href="#section-2.3-9" class="pilcrow">¶</a></p>
+<p id="section-2.3-10"><code>json
+{"said":"EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk","first":"Sue","last":"Smith","role":"Founder"}
+</code><a href="#section-2.3-10" class="pilcrow">¶</a></p>
+<p id="section-2.3-11">The final serialization may be converted to a Python <code>dict</code> by deserializing the JSON:<a href="#section-2.3-11" class="pilcrow">¶</a></p>
+<p id="section-2.3-12"><code>python
+{
+    "said": "EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk",
+    "first": "Sue",
+    "last": "Smith",
+    "role": "Founder"
+}
+</code><a href="#section-2.3-12" class="pilcrow">¶</a></p>
+<p id="section-2.3-13">The generation steps may be reversed to verify the embedded <code>SAID</code>. The protocol for mappings assumes the fields in the serialization are ordered in stable, round-trippable, reproducible order, i.e., canonical. The natural canonical ordering is called <code>field insertion order</code>.<a href="#section-2.3-13" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="example-ordered-mapping-to-json-serialization-with-said">
+<section id="section-2.4">
+        <h3 id="name-example-ordered-mapping-to-">
+<a href="#section-2.4" class="section-number selfRef">2.4. </a><a href="#name-example-ordered-mapping-to-" class="section-name selfRef">Example Ordered Mapping to JSON Serialization with SAID</a>
+        </h3>
+<p id="section-2.4-1">The following example shows the serialized <code>JSON</code> form of the deterministic, insertion-ordered Python <code>dict</code> above. The same derivation applies to any in-memory representation that preserves the specified field order and value types.<a href="#section-2.4-1" class="pilcrow">¶</a></p>
+<p id="section-2.4-2"><code>json
+{"said":"","first":"Sue","last":"Smith","role":"Founder"}
+</code><a href="#section-2.4-2" class="pilcrow">¶</a></p>
+<p id="section-2.4-3">Replace "said" with a 44-character placeholder and serialize without extra whitespace:<a href="#section-2.4-3" class="pilcrow">¶</a></p>
+<p id="section-2.4-4"><code>json
+{"said":"############################################","first":"Sue","last":"Smith","role":"Founder"}
+</code><a href="#section-2.4-4" class="pilcrow">¶</a></p>
+<p id="section-2.4-5"><code>Blake3-256</code> over those <code>JSON</code> bytes, encoded with <code>CESR</code>, produces EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk. Replacing the placeholder produces:<a href="#section-2.4-5" class="pilcrow">¶</a></p>
+<p id="section-2.4-6"><code>json
+{"said":"EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk","first":"Sue","last":"Smith","role":"Founder"}
+</code><a href="#section-2.4-6" class="pilcrow">¶</a></p>
+<p id="section-2.4-7">Verification restores the placeholder, reproduces the same <code>JSON</code> bytes, and recomputes the <code>SAID</code>.<a href="#section-2.4-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="example-schema-immutability-using-json-schema-with-saids">
-<section id="section-2.4">
+<section id="section-2.5">
         <h3 id="name-example-schema-immutability">
-<a href="#section-2.4" class="section-number selfRef">2.4. </a><a href="#name-example-schema-immutability" class="section-name selfRef">Example Schema Immutability Using JSON Schema with SAIDs</a>
+<a href="#section-2.5" class="section-number selfRef">2.5. </a><a href="#name-example-schema-immutability" class="section-name selfRef">Example Schema Immutability Using JSON Schema with SAIDs</a>
         </h3>
-<p id="section-2.4-1">A <code>JSON</code> Schema can use the same derivation procedure to give its "$id" field a self-referential, cryptographically bound identifier. The placeholder serialization is:<a href="#section-2.4-1" class="pilcrow">¶</a></p>
-<p id="section-2.4-2"><code>json
+<p id="section-2.5-1">A <code>JSON</code> Schema can use the same derivation procedure to give its "$id" field a self-referential, cryptographically bound identifier. The placeholder serialization is:<a href="#section-2.5-1" class="pilcrow">¶</a></p>
+<p id="section-2.5-2"><code>json
 {"$id":"############################################","$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"full_name":{"type":"string"}}}
-</code><a href="#section-2.4-2" class="pilcrow">¶</a></p>
-<p id="section-2.4-3">Digesting that serialization produces EZT9Idj7zLA0Ek6o8oevixdX20607CljNg4zrf_NQINY. Replacing the placeholder yields:<a href="#section-2.4-3" class="pilcrow">¶</a></p>
-<p id="section-2.4-4"><code>json
+</code><a href="#section-2.5-2" class="pilcrow">¶</a></p>
+<p id="section-2.5-3">Digesting that serialization produces EZT9Idj7zLA0Ek6o8oevixdX20607CljNg4zrf_NQINY. Replacing the placeholder yields:<a href="#section-2.5-3" class="pilcrow">¶</a></p>
+<p id="section-2.5-4"><code>json
 {"$id":"EZT9Idj7zLA0Ek6o8oevixdX20607CljNg4zrf_NQINY","$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"full_name":{"type":"string"}}}
-</code><a href="#section-2.4-4" class="pilcrow">¶</a></p>
-<p id="section-2.4-5">Data structures using embedded <code>SAIDs</code> in this way are referred to as self-addressing data (SAD).<a href="#section-2.4-5" class="pilcrow">¶</a></p>
+</code><a href="#section-2.5-4" class="pilcrow">¶</a></p>
+<p id="section-2.5-5">Data structures using embedded <code>SAIDs</code> in this way are referred to as self-addressing data (SAD).<a href="#section-2.5-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="discussion">
-<section id="section-2.5">
+<section id="section-2.6">
         <h3 id="name-discussion">
-<a href="#section-2.5" class="section-number selfRef">2.5. </a><a href="#name-discussion" class="section-name selfRef">Discussion</a>
+<a href="#section-2.6" class="section-number selfRef">2.6. </a><a href="#name-discussion" class="section-name selfRef">Discussion</a>
         </h3>
-<p id="section-2.5-1">A recognized derivation code identifies how to verify the binding between a <code>SAID</code> and its serialization. A valid <code>SAID</code> confirms that the serialization reproduces the bytes used during derivation; a mutation produces a different identifier. References to other serializations by <code>SAID</code> support compact, tamper-evident composition without embedding the referenced content in full.<a href="#section-2.5-1" class="pilcrow">¶</a></p>
+<p id="section-2.6-1">A recognized derivation code identifies how to verify the binding between a <code>SAID</code> and its serialization. A valid <code>SAID</code> confirms that the serialization reproduces the bytes used during derivation; a mutation produces a different identifier. References to other serializations by <code>SAID</code> support compact, tamper-evident composition without embedding the referenced content in full.<a href="#section-2.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1371,6 +1427,7 @@ field0______E8wYuBjhslETYaLZcxMkWrhVbMcA8RS1pKYl7nJ77ntA______
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-cesr-realization" class="section-name selfRef">CESR Realization</a>
         </h3>
 <p id="section-3.1-1">The <code>CESR</code> realization defined by this document embeds the encoded digest in the serialization itself. Its derivation code identifies the digest algorithm and encoding, while the dummy-value procedure resolves the otherwise circular dependency created by hashing content that contains its own identifier. This construction is both content-addressing and self-referential: the identifier is a field of the exact serialization to which it is cryptographically bound.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2">The primary expression of a <code>CESR</code> primitive is textual and uses Base64 URL-safe characters. CESR primitives can be round-tripped to a compact binary representation without loss. The derivation code enables digest algorithm agility by identifying the algorithm used for each <code>SAID</code>. <code>CESR</code> was developed for the <span>[<a href="#KERI" class="cite xref">KERI</a>]</span> protocol.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="cosecbor-realization">
@@ -1529,15 +1586,23 @@ appear in all capitals, as shown here.<a href="#section-4-1" class="pilcrow">¶<
 <p id="section-7-3">The KERI community refers to this discovery pattern as an Out-of-Band Introduction (<code>OOBI</code>). An <code>OOBI</code> associates a stable identifier with information that helps a client discover the current endpoint or resources needed to interact with the identified entity or retrieve identified content.<a href="#section-7-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="sec-combined-references">
+<div id="appendix-json-schema-with-saids">
 <section id="section-8">
+      <h2 id="name-appendix-json-schema-with-s">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-appendix-json-schema-with-s" class="section-name selfRef">Appendix: JSON Schema with SAIDs</a>
+      </h2>
+<p id="section-8-1">This appendix will define normative rules for using <code>SAIDs</code> to make JSON Schema immutable and prevent schema malleability attacks.<a href="#section-8-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-9">
       <h2 id="name-references">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-references" class="section-name selfRef">References</a>
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-references" class="section-name selfRef">References</a>
       </h2>
 <div id="sec-normative-references">
-<section id="section-8.1">
+<section id="section-9.1">
         <h3 id="name-normative-references">
-<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
         </h3>
 <dl class="references">
 <dt id="CESR">[CESR]</dt>
@@ -1580,9 +1645,9 @@ appear in all capitals, as shown here.<a href="#section-4-1" class="pilcrow">¶<
 </section>
 </div>
 <div id="sec-informative-references">
-<section id="section-8.2">
+<section id="section-9.2">
         <h3 id="name-informative-references">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
         </h3>
 <dl class="references">
 <dt id="KERI">[KERI]</dt>
