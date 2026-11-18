@@ -97,27 +97,31 @@ tags: IETF, SAID, CESR, SAD, ACDC, KERI, COSE, JOSE, CBOR
 
 --- abstract
 
-A Self-Addressing IDentifier (`SAID`) is a content-addressable identifier that is cryptographically bound to a deterministic serialization and can be embedded within the structure it identifies. Embedding a preferred content address in the associated structure reduces ambiguity and supports interoperable, tamper-evident reasoning. Derivation replaces the identifier field with a defined placeholder, deterministically serializes the structure, computes a cryptographic digest, and encodes that digest as the identifier. Verification repeats these steps, so any change to the serialization invalidates the identifier.
+A `SAID` (Self-Addressing IDentifier) is a self-referential, content-addressable identifier cryptographically bound to a deterministic serialization that contains the identifier as a field. Derivation replaces that field with a same-length placeholder, computes a digest over the resulting serialization, and encodes the digest as the `SAID`. Verification repeats the process; a mutation causes verification to fail, assuming the digest algorithm remains collision-resistant. Embedding a preferred content address in the serialization reduces ambiguity and supports interoperable, tamper-evident reasoning.
 
-Given sufficient cryptographic strength and successful verification under the identified derivation and serialization profile, a signature, digest, or another `SAID` that commits to a `SAID` also commits to the serialization identified by it. Applications can therefore reference immutable data compactly by identifier rather than embedding the entire structure. Examples include Verifiable Credentials, Ricardian Contracts, schemas, and other authenticatable data structures.
+Given sufficient cryptographic strength and successful verification under the same derivation and serialization profile, a signature, digest, or other `SAID` that commits to a `SAID` also commits to the serialization it identifies. `SAIDs` therefore support compact references to immutable data, including Verifiable Credentials, Ricardian Contracts, schemas, and other authenticatable data structures.
 
-Reproducibility depends on a deterministic wire-to-memory-to-wire round trip. A receiver decodes bytes from a deterministic wire format into an in-memory value that preserves every serialization-relevant distinction; re-encoding under the same profile reproduces the identical byte sequence. Ordered mappings, deterministic `CBOR`, and ASN.1 `DER` illustrate approaches that provide this stability. The identifier representation also indicates or is associated with the digest algorithm, supporting cryptographic agility and future evolution.
+`SAIDs` are encoded with `CESR` (Composable Event Streaming Representation) [CESR]. A `CESR` derivation code identifies the cryptographic suite or digest algorithm. A `CESR` primitive's primary expression is textual and uses Base64 URL-safe characters; primitives can also be round-tripped to a compact binary representation without loss. Because each serialization can indicate its own digest algorithm, `CESR` supports cryptographic agility. `CESR` was developed for the [KERI] protocol.
 
-This document describes the native `CESR` realization and profiles comparable deterministic content-addressing and cryptographic-commitment properties for `COSE`/`CBOR` and `JOSE`/`JSON`. The `COSE` realization uses an [RFC9995] hash envelope whose payload is the digest of deterministic `CBOR` data. The `JOSE` realization omits the `JWS` payload and carries the digest in a critical protected-header parameter defined by the profile. `CDDL` and `JSON` examples apply both envelope approaches to the same application structure. These `SAID`-like constructions are distinguished from a natively self-referential `SAID` and require additional embedding and derivation rules to obtain self-reference.
+Reproducible derivation requires a deterministic wire-to-memory-to-wire round trip: decoding must preserve every distinction that affects serialization, and re-encoding under the same profile must reproduce the same bytes. Ordered mappings, deterministic `CBOR`, and ASN.1 `DER` are examples of ways to achieve this.
+
+This document describes the native, self-referential `CESR` realization and profiles related content-addressing and cryptographic-commitment properties for `COSE`/`CBOR` and `JOSE`/`JSON`. The `COSE` profile uses the [RFC9995] hash envelope with a digest of deterministic `CBOR`. The `JOSE` profile omits the `JWS` payload and carries the digest in a critical protected-header parameter; its JSON examples use the JSON Canonicalization Scheme [RFC8785]. These `SAID`-like constructions are not natively self-referential: additional embedding and derivation rules are needed to obtain that property.
 
 --- middle
 
 # Introduction
 
-A content-addressable identifier is derived from the bytes of a serialization and is therefore cryptographically bound to those bytes. This binding provides a root of trust for reasoning about the serialization: a sufficiently strong cryptographic commitment to the identifier is functionally equivalent to a commitment to the identified serialization.
+A content-addressable identifier is derived from a serialization and is cryptographically bound to its bytes. This binding provides a root of trust for reasoning about the content: a sufficiently strong cryptographic commitment to the identifier is functionally equivalent to a commitment to the serialization.
 
-A self-addressing identifier (`SAID`) adds self-reference to content addressing by embedding the identifier within the serialization it identifies. Directly hashing a serialization that already contains its own digest creates a circular dependency, so `SAID` derivation uses a defined placeholder for the identifier field. The placeholder form is deterministically serialized and hashed, and the resulting encoded digest replaces the placeholder.
+A `self-addressing identifier (SAID)` is a content-addressable identifier that is also self-referential: it is included in the serialization it identifies. Directly hashing a serialization that contains its own digest creates a circular dependency, and changing any part of the serialized content changes its digest. `SAID` derivation resolves this by replacing the identifier field with a same-length placeholder, hashing the resulting serialization, and replacing the placeholder with the encoded digest. A verifier can repeat these steps to verify or re-derive the identifier.
 
-A standard content address is computed from completed content and is normally maintained outside that content. A `SAID` is instead both cryptographically bound to and carried within its serialization, making the preferred identifier self-contained. The identifier representation also conveys or is associated with the digest algorithm used during derivation, enabling algorithm agility.
+This derivation of an identifier from the content it identifies is called `self-addressing`. A conventional content address is computed over completed content and is normally maintained outside that content; it cannot simply be embedded in the content it identifies. A `SAID`, by contrast, is both embedded in and cryptographically bound to its serialization. Its `CESR` derivation code identifies the digest algorithm used to create it.
 
-An authenticatable data serialization is digitally signed so that a verifier can attribute it to the signer using the corresponding public key. Such serializations often contain identifiers for themselves or references to other serializations. If those identifiers are merely labels, an attacker can reuse the same label in altered content without detection.
+An authenticatable data serialization is digitally signed using a non-repudiable asymmetric-key signature scheme. A verifier with the corresponding public key can validate the signature and attribute the serialization to its signer. Such serializations may contain self-referential identifiers and references to other serializations. An unbound identifier is only a label: anyone can copy it into different content and claim that content is the one it identifies. This can leave the same data with two identifiers—a self-referential but unbound label and an externally tracked content address.
 
-A `SAID` removes this ambiguity by binding the embedded identifier to the serialization that contains it. Verification succeeds only when the serialization reproduces the bytes used during derivation; a mutation produces a different identifier. References to other serializations by `SAID` therefore support compact, tamper-evident composition without embedding each referenced serialization in full.
+A `SAID` binds the embedded identifier to the serialization that contains it, resolving that ambiguity: successful verification shows that the serialization has not been changed, subject to the digest algorithm's security. References to other serializations by `SAID` provide compact, tamper-evident composition without embedding each referenced serialization in full.
+
+Reproducible verification depends on a deterministic serialization profile. Decoding and re-encoding must preserve every distinction that affects the bytes being hashed, including field order and value representation. The same profile must be used for derivation and verification.
 
 The urn said is now a registered namespace at IANA [URNSAID].
 The urn said namespace uses the SAID protocol.
@@ -178,9 +182,64 @@ When mapping order affects the wire format, the in-memory representation preserv
 
 Programming-language mappings have not always preserved insertion order. If a native mapping lacks a stable ordering contract, an ordered mapping, schema-defined record, or explicit canonical sorting step establishes reproducibility.
 
+## Example Python dict to JSON Serialization with SAID
+
+Suppose the initial value of a Python `dict` is as follows:
+
+```python
+{
+    "said": "",
+    "first": "Sue",
+    "last": "Smith",
+    "role": "Founder"
+}
+```
+
+As before, the `SAID` will be a 44-character CESR-encoded Blake3-256 digest. The serialization will be `JSON`. The `said` field value in the `dict` is to be populated with the resulting `SAID`. First the value of the `said` field is replaced with a 44-character dummy string:
+
+```python
+{
+    "said": "############################################",
+    "first": "Sue",
+    "last": "Smith",
+    "role": "Founder"
+}
+```
+
+The `dict` is then serialized into JSON with no extra whitespace:
+
+```json
+{"said":"############################################","first":"Sue","last":"Smith","role":"Founder"}
+```
+
+The Blake3-256 digest is computed on that serialization and encoded in `CESR` to provide the `SAID`:
+
+```
+EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk
+```
+
+The value of the `said` field is replaced with the computed and encoded `SAID`:
+
+```json
+{"said":"EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk","first":"Sue","last":"Smith","role":"Founder"}
+```
+
+The final serialization may be converted to a Python `dict` by deserializing the JSON:
+
+```python
+{
+    "said": "EnKa0ALimLL8eQdZGzglJG_SxvncxkmvwFDhIyLFchUk",
+    "first": "Sue",
+    "last": "Smith",
+    "role": "Founder"
+}
+```
+
+The generation steps may be reversed to verify the embedded `SAID`. The protocol for mappings assumes the fields in the serialization are ordered in stable, round-trippable, reproducible order, i.e., canonical. The natural canonical ordering is called `field insertion order`.
+
 ## Example Ordered Mapping to JSON Serialization with SAID
 
-The following example uses a Python dictionary only as a concrete instance of a deterministic, insertion-ordered in-memory mapping. The same derivation applies to any representation that preserves the specified field order and value types:
+The following example shows the serialized `JSON` form of the deterministic, insertion-ordered Python `dict` above. The same derivation applies to any in-memory representation that preserves the specified field order and value types.
 
 ```json
 {"said":"","first":"Sue","last":"Smith","role":"Founder"}
@@ -227,6 +286,8 @@ The properties provided by a `SAID` can be realized through multiple representat
 ## CESR Realization
 
 The `CESR` realization defined by this document embeds the encoded digest in the serialization itself. Its derivation code identifies the digest algorithm and encoding, while the dummy-value procedure resolves the otherwise circular dependency created by hashing content that contains its own identifier. This construction is both content-addressing and self-referential: the identifier is a field of the exact serialization to which it is cryptographically bound.
+
+The primary expression of a `CESR` primitive is textual and uses Base64 URL-safe characters. CESR primitives can be round-tripped to a compact binary representation without loss. The derivation code enables digest algorithm agility by identifying the algorithm used for each `SAID`. `CESR` was developed for the [KERI] protocol.
 
 ## COSE/CBOR Realization
 
@@ -343,6 +404,10 @@ A `SAID` can serve as a stable content identifier while discovery information is
 Separating integrity from discovery reduces message and data-structure size while retaining a cryptographic commitment to the referenced content. The `SAID` identifies the content; DNS and the resolved URI identify a current retrieval location. A change to that location for administrative reasons, such as a company domain-name change or service migration, does not alter the content bytes and therefore does not invalidate existing commitments to the `SAID`.
 
 The KERI community refers to this discovery pattern as an Out-of-Band Introduction (`OOBI`). An `OOBI` associates a stable identifier with information that helps a client discover the current endpoint or resources needed to interact with the identified entity or retrieve identified content.
+
+# Appendix: JSON Schema with SAIDs
+
+This appendix will define normative rules for using `SAIDs` to make JSON Schema immutable and prevent schema malleability attacks.
 
 --- back
 
