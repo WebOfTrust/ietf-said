@@ -1183,16 +1183,19 @@ The latter profiles require additional rules to provide self-reference.<a href="
             <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-architecture" class="internal xref">Architecture</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
-                <p id="section-toc.1-1.2.2.1.1" class="keepWithNext"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-schema-conformance" class="internal xref">Schema Conformance</a></p>
+                <p id="section-toc.1-1.2.2.1.1" class="keepWithNext"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-technology-scope" class="internal xref">Technology Scope</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.2">
-                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-said-based-payload-integrit" class="internal xref">SAID-Based Payload Integrity and Embedding</a></p>
+                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-integrity-principle" class="internal xref">Integrity Principle</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.3">
-                <p id="section-toc.1-1.2.2.3.1"><a href="#section-2.3" class="auto internal xref">2.3</a>.  <a href="#name-protocol-flow" class="internal xref">Protocol Flow</a></p>
+                <p id="section-toc.1-1.2.2.3.1"><a href="#section-2.3" class="auto internal xref">2.3</a>.  <a href="#name-schema-conformance" class="internal xref">Schema Conformance</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.4">
-                <p id="section-toc.1-1.2.2.4.1"><a href="#section-2.4" class="auto internal xref">2.4</a>.  <a href="#name-technology-scope" class="internal xref">Technology Scope</a></p>
+                <p id="section-toc.1-1.2.2.4.1"><a href="#section-2.4" class="auto internal xref">2.4</a>.  <a href="#name-said-based-payload-integrit" class="internal xref">SAID-Based Payload Integrity and Embedding</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.5">
+                <p id="section-toc.1-1.2.2.5.1"><a href="#section-2.5" class="auto internal xref">2.5</a>.  <a href="#name-protocol-flow" class="internal xref">Protocol Flow</a></p>
 </li>
             </ul>
 </li>
@@ -1391,46 +1394,71 @@ The serialization profile specifies how to encode and decode the data object so 
                                +-----------------------+
 </pre><a href="#section-2-2" class="pilcrow">¶</a>
 </div>
-<div id="schema-conformance">
+<div id="technology-scope">
 <section id="section-2.1">
-        <h3 id="name-schema-conformance">
-<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-schema-conformance" class="section-name selfRef">Schema Conformance</a>
+        <h3 id="name-technology-scope">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-technology-scope" class="section-name selfRef">Technology Scope</a>
         </h3>
-<p id="section-2.1-1">The application schema describes the permitted structure and constraints of the data object.
+<p id="section-2.1-1">The architecture is independent of a particular programming language or in-memory data structure.
+This document describes SAID representations for CESR, CBOR, JSON, and URN,
+with CDDL and JSON Schema definitions where applicable.
+Application profiles select the schema for the data object and the deterministic serialization profile.
+The Python mappings and particular digest, serialization, or envelope choices in the examples illustrate possible realizations;
+they are not prerequisites for implementing the architecture.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="integrity-principle">
+<section id="section-2.2">
+        <h3 id="name-integrity-principle">
+<a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-integrity-principle" class="section-name selfRef">Integrity Principle</a>
+        </h3>
+<p id="section-2.2-1">An authenticatable data serialization is digitally signed using a non-repudiable asymmetric-key signature scheme.
+A verifier with the corresponding public key can validate the signature and attribute the serialization to its signer.
+Such serializations may contain self-referential identifiers and references to other serializations.
+An unbound identifier is only a label: anyone can copy it into different content and claim that content is the one it identifies.
+This can leave the same data with two identifiers—a self-referential but unbound label and an externally tracked content address.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="schema-conformance">
+<section id="section-2.3">
+        <h3 id="name-schema-conformance">
+<a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-schema-conformance" class="section-name selfRef">Schema Conformance</a>
+        </h3>
+<p id="section-2.3-1">The application schema describes the permitted structure and constraints of the data object.
 The producer checks the completed data object before sending it.
 The consumer checks the decoded data object before handing it to the application.
 These checks establish conformance to the application data model; they are distinct from SAID verification.
 The schemas in this document define the allowed forms of a <code>SAID</code> value,
 not the structure of the application data object that contains it.
-An application profile defines that structure.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+An application profile defines that structure.<a href="#section-2.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="said-based-payload-integrity-and-embedding">
-<section id="section-2.2">
+<section id="section-2.4">
         <h3 id="name-said-based-payload-integrit">
-<a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-said-based-payload-integrit" class="section-name selfRef">SAID-Based Payload Integrity and Embedding</a>
+<a href="#section-2.4" class="section-number selfRef">2.4. </a><a href="#name-said-based-payload-integrit" class="section-name selfRef">SAID-Based Payload Integrity and Embedding</a>
         </h3>
-<p id="section-2.2-1">The embedded SAID binds the data object to its deterministic serialization.
+<p id="section-2.4-1">The embedded SAID binds the data object to its deterministic serialization.
 Derivation replaces the SAID field with a same-length placeholder,
 serializes the data object using the shared deterministic serialization profile,
 computes the digest identified by the SAID, and places the encoded digest in the field.
 Verification repeats the process and compares the recomputed value with the embedded SAID.
-The serialization profile accounts for distinctions that affect the digest bytes, such as field order and value representation.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
-<p id="section-2.2-2">Some application profiles use a detached payload that contains its own SAID, for example vLEI <span>[<a href="#VLEI" class="cite xref">VLEI</a>]</span>.
+The serialization profile accounts for distinctions that affect the digest bytes, such as field order and value representation.<a href="#section-2.4-1" class="pilcrow">¶</a></p>
+<p id="section-2.4-2">Some application profiles use a detached payload that contains its own SAID, for example vLEI <span>[<a href="#VLEI" class="cite xref">VLEI</a>]</span>.
 Such profiles are subject to the conditional requirements in Section 4.
 Applications can carry such payloads in enclosing structures,
 including signature or MAC envelopes when producer authentication is needed.
 The enclosing structures and their authentication processing are outside the scope of this document.
 A digest carried only in an envelope, and not embedded in the identified payload,
-is a content address for that payload rather than a self-referential SAID.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
+is a content address for that payload rather than a self-referential SAID.<a href="#section-2.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="protocol-flow">
-<section id="section-2.3">
+<section id="section-2.5">
         <h3 id="name-protocol-flow">
-<a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-protocol-flow" class="section-name selfRef">Protocol Flow</a>
+<a href="#section-2.5" class="section-number selfRef">2.5. </a><a href="#name-protocol-flow" class="section-name selfRef">Protocol Flow</a>
         </h3>
-<p id="section-2.3-1">The producer derives and embeds the SAID in the data object,
+<p id="section-2.5-1">The producer derives and embeds the SAID in the data object,
 validates the completed data object against the application schema, and encodes it in the wire format.
 The consumer receives and decodes the data object from the wire,
 validates the decoded data object against the application schema,
@@ -1438,20 +1466,7 @@ verifies its integrity using the embedded SAID and shared deterministic serializ
 and hands it off to the application.
 Schema validation checks the data object's conformance to the application schema;
 SAID verification checks the binding between the data object and the digest input.
-Both checks are part of the end-to-end flow shown above.<a href="#section-2.3-1" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="technology-scope">
-<section id="section-2.4">
-        <h3 id="name-technology-scope">
-<a href="#section-2.4" class="section-number selfRef">2.4. </a><a href="#name-technology-scope" class="section-name selfRef">Technology Scope</a>
-        </h3>
-<p id="section-2.4-1">The architecture is independent of a particular programming language or in-memory data structure.
-This document describes SAID representations for CESR, CBOR, JSON, and URN,
-with CDDL and JSON Schema definitions where applicable.
-Application profiles select the schema for the data object and the deterministic serialization profile.
-The Python mappings and particular digest, serialization, or envelope choices in the examples illustrate possible realizations;
-they are not prerequisites for implementing the architecture.<a href="#section-2.4-1" class="pilcrow">¶</a></p>
+Both checks are part of the end-to-end flow shown above.<a href="#section-2.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>

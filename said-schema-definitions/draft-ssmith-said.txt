@@ -85,10 +85,11 @@ Table of Contents
    1.  Introduction
      1.1.  Requirements Language
    2.  Architecture
-     2.1.  Schema Conformance
-     2.2.  SAID-Based Payload Integrity and Embedding
-     2.3.  Protocol Flow
-     2.4.  Technology Scope
+     2.1.  Technology Scope
+     2.2.  Integrity Principle
+     2.3.  Schema Conformance
+     2.4.  SAID-Based Payload Integrity and Embedding
+     2.5.  Protocol Flow
    3.  Example Digest Computation and Payload Embedding
      3.1.  Example Computation
      3.2.  Serialization Generation
@@ -186,7 +187,30 @@ Table of Contents
                                   |     to application    |
                                   +-----------------------+
 
-2.1.  Schema Conformance
+2.1.  Technology Scope
+
+   The architecture is independent of a particular programming language
+   or in-memory data structure.  This document describes SAID
+   representations for CESR, CBOR, JSON, and URN, with CDDL and JSON
+   Schema definitions where applicable.  Application profiles select the
+   schema for the data object and the deterministic serialization
+   profile.  The Python mappings and particular digest, serialization,
+   or envelope choices in the examples illustrate possible realizations;
+   they are not prerequisites for implementing the architecture.
+
+2.2.  Integrity Principle
+
+   An authenticatable data serialization is digitally signed using a
+   non-repudiable asymmetric-key signature scheme.  A verifier with the
+   corresponding public key can validate the signature and attribute the
+   serialization to its signer.  Such serializations may contain self-
+   referential identifiers and references to other serializations.  An
+   unbound identifier is only a label: anyone can copy it into different
+   content and claim that content is the one it identifies.  This can
+   leave the same data with two identifiers—a self-referential but
+   unbound label and an externally tracked content address.
+
+2.3.  Schema Conformance
 
    The application schema describes the permitted structure and
    constraints of the data object.  The producer checks the completed
@@ -198,7 +222,7 @@ Table of Contents
    object that contains it.  An application profile defines that
    structure.
 
-2.2.  SAID-Based Payload Integrity and Embedding
+2.4.  SAID-Based Payload Integrity and Embedding
 
    The embedded SAID binds the data object to its deterministic
    serialization.  Derivation replaces the SAID field with a same-length
@@ -220,7 +244,7 @@ Table of Contents
    embedded in the identified payload, is a content address for that
    payload rather than a self-referential SAID.
 
-2.3.  Protocol Flow
+2.5.  Protocol Flow
 
    The producer derives and embeds the SAID in the data object,
    validates the completed data object against the application schema,
@@ -232,17 +256,6 @@ Table of Contents
    object's conformance to the application schema; SAID verification
    checks the binding between the data object and the digest input.
    Both checks are part of the end-to-end flow shown above.
-
-2.4.  Technology Scope
-
-   The architecture is independent of a particular programming language
-   or in-memory data structure.  This document describes SAID
-   representations for CESR, CBOR, JSON, and URN, with CDDL and JSON
-   Schema definitions where applicable.  Application profiles select the
-   schema for the data object and the deterministic serialization
-   profile.  The Python mappings and particular digest, serialization,
-   or envelope choices in the examples illustrate possible realizations;
-   they are not prerequisites for implementing the architecture.
 
 3.  Example Digest Computation and Payload Embedding
 
