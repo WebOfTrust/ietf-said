@@ -1,0 +1,10 @@
+; CBOR can carry a CESR representation or an algorithm/digest tuple.
+said-cbor = $said-cbor
+$said-cbor /= said-cesr
+$said-cbor /= said-alg-digest
+
+; hash-alg-id is from the IANA Named Information Hash Algorithm Registry.
+said-alg-digest = [
+  hash-alg-id: int
+  hash-value: bstr
+]

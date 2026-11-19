@@ -1,0 +1,9 @@
+draft-ssmith-said.xml: cddl/said-root.cddl
+draft-ssmith-said.xml: cddl/said-urn.cddl
+draft-ssmith-said.xml: cddl/said-cbor.cddl
+draft-ssmith-said.xml: cddl/said-json.cddl
+draft-ssmith-said.xml: cddl/said-cesr.cddl
+draft-ssmith-said.xml: jsons/said-root.json
+draft-ssmith-said.xml: jsons/said-urn.json
+draft-ssmith-said.xml: jsons/said-json.json
+draft-ssmith-said.xml: jsons/said-cesr.json

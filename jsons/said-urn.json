@@ -1,0 +1,9 @@
+{
+  "definitions": {
+    "said-urn": {
+      "$comment": "A CESR SAID carried in the urn:cesr:said: namespace.",
+      "type": "string",
+      "pattern": "^urn:cesr:said:(?:(?:E|F|G|H|I)[A-Za-z0-9_-]{43}|0(?:D|E|F|G)[A-Za-z0-9_-]{86})$"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+; The shared type is extended by the supported representation profiles.
+said = $said
+$said /= said-cbor
+$said /= said-json
+$said /= said-cesr
+$said /= said-urn

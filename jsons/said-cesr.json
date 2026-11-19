@@ -1,0 +1,24 @@
+{
+  "definitions": {
+    "said-cesr": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-cesr-256"
+        },
+        {
+          "$ref": "#/definitions/said-cesr-512"
+        }
+      ]
+    },
+    "said-cesr-256": {
+      "$comment": "A CESR 256-bit digest code and 43 base64url characters.",
+      "type": "string",
+      "pattern": "^(?:E|F|G|H|I)[A-Za-z0-9_-]{43}$"
+    },
+    "said-cesr-512": {
+      "$comment": "A CESR 512-bit digest code and 86 base64url characters.",
+      "type": "string",
+      "pattern": "^0(?:D|E|F|G)[A-Za-z0-9_-]{86}$"
+    }
+  }
+}

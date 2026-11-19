@@ -1,0 +1,4 @@
+; The URN representation is a CESR digest prefixed with "urn:cesr:said:".
+; The URN payload is the CESR text defined by said-cesr.
+said-urn = $said-urn
+$said-urn /= "urn:cesr:said:" .cat said-cesr

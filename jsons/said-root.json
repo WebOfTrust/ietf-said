@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Top-level JSON Schema for the supported SAID representations.",
+  "allOf": [
+    {
+      "$ref": "#/definitions/said"
+    }
+  ],
+  "definitions": {
+    "said": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-json"
+        },
+        {
+          "$ref": "#/definitions/said-urn"
+        }
+      ]
+    }
+  }
+}

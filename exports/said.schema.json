@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Top-level JSON Schema for the supported SAID representations.",
+  "allOf": [
+    {
+      "$ref": "#/definitions/said"
+    }
+  ],
+  "definitions": {
+    "said": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-json"
+        },
+        {
+          "$ref": "#/definitions/said-urn"
+        }
+      ]
+    },
+    "said-urn": {
+      "$comment": "A CESR SAID carried in the urn:cesr:said: namespace.",
+      "type": "string",
+      "pattern": "^urn:cesr:said:(?:(?:E|F|G|H|I)[A-Za-z0-9_-]{43}|0(?:D|E|F|G)[A-Za-z0-9_-]{86})$"
+    },
+    "said-json": {
+      "$comment": "JSON carries CESR text or an algorithm/digest object.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-cesr"
+        },
+        {
+          "$ref": "#/definitions/said-json-alg-digest"
+        }
+      ]
+    },
+    "said-json-alg-digest": {
+      "$comment": "The digest is unpadded base64url text.",
+      "type": "object",
+      "properties": {
+        "hash-alg-id": {
+          "type": "string"
+        },
+        "hash-value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "hash-alg-id",
+        "hash-value"
+      ],
+      "additionalProperties": false
+    },
+    "said-cesr": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-cesr-256"
+        },
+        {
+          "$ref": "#/definitions/said-cesr-512"
+        }
+      ]
+    },
+    "said-cesr-256": {
+      "$comment": "A CESR 256-bit digest code and 43 base64url characters.",
+      "type": "string",
+      "pattern": "^(?:E|F|G|H|I)[A-Za-z0-9_-]{43}$"
+    },
+    "said-cesr-512": {
+      "$comment": "A CESR 512-bit digest code and 86 base64url characters.",
+      "type": "string",
+      "pattern": "^0(?:D|E|F|G)[A-Za-z0-9_-]{86}$"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+; JSON can carry CESR text or an algorithm/digest object.
+said-json = $said-json
+$said-json /= said-cesr
+$said-json /= said-json-alg-digest
+
+; JSON uses a hash-algorithm name and an unpadded base64url digest.
+said-json-alg-digest = {
+  hash-alg-id: tstr
+  hash-value: tstr .regexp "[A-Za-z0-9_-]+"
+}
