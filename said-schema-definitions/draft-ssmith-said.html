@@ -1,0 +1,2474 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Self-Addressing IDentifier (SAID)</title>
+<meta content="S. Smith" name="author">
+<meta content="N. Smith" name="author">
+<meta content="
+       A  SAID  (Self-Addressing IDentifier) is a self-referential,
+content-addressable identifier cryptographically bound to a deterministic serialization that contains the identifier as a field.
+Derivation replaces that field with a same-length placeholder, computes a digest over the resulting serialization,
+and encodes the digest as the  SAID .
+Verification repeats the process; a mutation causes verification to fail,
+assuming the digest algorithm remains collision-resistant.
+Embedding a preferred content address in the serialization reduces ambiguity and supports interoperable, tamper-evident reasoning. 
+       Given sufficient cryptographic strength and successful verification under the same derivation and serialization profile,
+a signature, digest, or other  SAID  that commits to a  SAID  also commits to the serialization it identifies.
+ SAIDs  therefore support compact references to immutable data, including Verifiable Credentials, Ricardian Contracts, schemas,
+and other authenticatable data structures. 
+       Reproducible derivation requires a deterministic wire-to-memory-to-wire round trip.
+Decoding must preserve every distinction that affects serialization.
+Re-encoding under the same profile must reproduce the same bytes.
+Ordered mappings, deterministic  CBOR , and ASN.1  DER  are examples of ways to achieve this. 
+       This document describes a native, self-referential  CESR  encoding and related profiles for  COSE / CBOR  and  JOSE / JSON .
+The latter profiles require additional rules to provide self-reference. 
+    " name="description">
+<meta content="xml2rfc 3.35.0" name="generator">
+<meta content="Internet-Draft" name="keyword">
+<meta content="draft-ssmith-said-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.35.0
+    Python 3.14.10
+    ConfigArgParse 1.10.1
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.14.7
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.9.4
+-->
+<link href="draft-ssmith-said.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill], [fill] *)) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">SAID</td>
+<td class="right">November 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Smith &amp; Smith</td>
+<td class="center">Expires 23 May 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">TODO Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-ssmith-said-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-11-19" class="published">19 November 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-05-23">23 May 2027</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">S. Smith</div>
+<div class="org">ProSapien LLC</div>
+</div>
+<div class="author">
+      <div class="author-name">N. Smith</div>
+<div class="org">EntropyWorks LLC</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Self-Addressing IDentifier (SAID)</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">A <code>SAID</code> (Self-Addressing IDentifier) is a self-referential,
+content-addressable identifier cryptographically bound to a deterministic serialization that contains the identifier as a field.
+Derivation replaces that field with a same-length placeholder, computes a digest over the resulting serialization,
+and encodes the digest as the <code>SAID</code>.
+Verification repeats the process; a mutation causes verification to fail,
+assuming the digest algorithm remains collision-resistant.
+Embedding a preferred content address in the serialization reduces ambiguity and supports interoperable, tamper-evident reasoning.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">Given sufficient cryptographic strength and successful verification under the same derivation and serialization profile,
+a signature, digest, or other <code>SAID</code> that commits to a <code>SAID</code> also commits to the serialization it identifies.
+<code>SAIDs</code> therefore support compact references to immutable data, including Verifiable Credentials, Ricardian Contracts, schemas,
+and other authenticatable data structures.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-3">Reproducible derivation requires a deterministic wire-to-memory-to-wire round trip.
+Decoding must preserve every distinction that affects serialization.
+Re-encoding under the same profile must reproduce the same bytes.
+Ordered mappings, deterministic <code>CBOR</code>, and ASN.1 <code>DER</code> are examples of ways to achieve this.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
+<p id="section-abstract-4">This document describes a native, self-referential <code>CESR</code> encoding and related profiles for <code>COSE</code>/<code>CBOR</code> and <code>JOSE</code>/<code>JSON</code>.
+The latter profiles require additional rules to provide self-reference.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-discussion-venues">
+<a href="#name-discussion-venues" class="section-name selfRef">Discussion Venues</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">Source for this draft and an issue tracker can be found at
+    <span><a href="https://github.com/WebOfTrust/ietf-said">https://github.com/WebOfTrust/ietf-said</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 23 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-requirements-language" class="internal xref">Requirements Language</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-architecture" class="internal xref">Architecture</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
+                <p id="section-toc.1-1.2.2.1.1" class="keepWithNext"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-schema-conformance" class="internal xref">Schema Conformance</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.2">
+                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-said-based-payload-integrit" class="internal xref">SAID-Based Payload Integrity and Embedding</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.3">
+                <p id="section-toc.1-1.2.2.3.1"><a href="#section-2.3" class="auto internal xref">2.3</a>.  <a href="#name-protocol-flow" class="internal xref">Protocol Flow</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.4">
+                <p id="section-toc.1-1.2.2.4.1"><a href="#section-2.4" class="auto internal xref">2.4</a>.  <a href="#name-technology-scope" class="internal xref">Technology Scope</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-example-digest-computation-" class="internal xref">Example Digest Computation and Payload Embedding</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-example-computation" class="internal xref">Example Computation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-serialization-generation" class="internal xref">Serialization Generation</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2.2.1">
+                    <p id="section-toc.1-1.3.2.2.2.1.1"><a href="#section-3.2.1" class="auto internal xref">3.2.1</a>.  <a href="#name-deterministic-in-memory-rep" class="internal xref">Deterministic In-Memory Representations</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2.2.2">
+                    <p id="section-toc.1-1.3.2.2.2.2.1"><a href="#section-3.2.2" class="auto internal xref">3.2.2</a>.  <a href="#name-example-python-dict-to-json" class="internal xref">Example Python dict to JSON Serialization with SAID</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2.2.3">
+                    <p id="section-toc.1-1.3.2.2.2.3.1"><a href="#section-3.2.3" class="auto internal xref">3.2.3</a>.  <a href="#name-example-ordered-mapping-to-" class="internal xref">Example Ordered Mapping to JSON Serialization with SAID</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2.2.4">
+                    <p id="section-toc.1-1.3.2.2.2.4.1"><a href="#section-3.2.4" class="auto internal xref">3.2.4</a>.  <a href="#name-example-schema-immutability" class="internal xref">Example Schema Immutability Using JSON Schema with SAIDs</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-discussion" class="internal xref">Discussion</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-said-schema-definitions" class="internal xref">SAID Schema Definitions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-cddl" class="internal xref">CDDL</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.1">
+                    <p id="section-toc.1-1.4.2.1.2.1.1"><a href="#section-4.1.1" class="auto internal xref">4.1.1</a>.  <a href="#name-root-said-type" class="internal xref">Root <code>said</code> Type</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.2">
+                    <p id="section-toc.1-1.4.2.1.2.2.1"><a href="#section-4.1.2" class="auto internal xref">4.1.2</a>.  <a href="#name-urn-representation" class="internal xref">URN Representation</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.3">
+                    <p id="section-toc.1-1.4.2.1.2.3.1"><a href="#section-4.1.3" class="auto internal xref">4.1.3</a>.  <a href="#name-cbor-representation" class="internal xref">CBOR Representation</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.4">
+                    <p id="section-toc.1-1.4.2.1.2.4.1"><a href="#section-4.1.4" class="auto internal xref">4.1.4</a>.  <a href="#name-json-representation" class="internal xref">JSON Representation</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.5">
+                    <p id="section-toc.1-1.4.2.1.2.5.1"><a href="#section-4.1.5" class="auto internal xref">4.1.5</a>.  <a href="#name-cesr-representation" class="internal xref">CESR Representation</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-json-schema" class="internal xref">JSON Schema</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.1">
+                    <p id="section-toc.1-1.4.2.2.2.1.1"><a href="#section-4.2.1" class="auto internal xref">4.2.1</a>.  <a href="#name-root-said-schema" class="internal xref">Root <code>said</code> Schema</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.2">
+                    <p id="section-toc.1-1.4.2.2.2.2.1"><a href="#section-4.2.2" class="auto internal xref">4.2.2</a>.  <a href="#name-urn-schema" class="internal xref">URN Schema</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.3">
+                    <p id="section-toc.1-1.4.2.2.2.3.1"><a href="#section-4.2.3" class="auto internal xref">4.2.3</a>.  <a href="#name-json-object-representation-" class="internal xref">JSON Object Representation Schema</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.4">
+                    <p id="section-toc.1-1.4.2.2.2.4.1"><a href="#section-4.2.4" class="auto internal xref">4.2.4</a>.  <a href="#name-cesr-schema" class="internal xref">CESR Schema</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-realizing-said-like-propert" class="internal xref">Realizing SAID-Like Properties with CESR, COSE, and JOSE</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-cesr-realization" class="internal xref">CESR Realization</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-cose-cbor-realization" class="internal xref">COSE/CBOR Realization</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.1">
+                    <p id="section-toc.1-1.5.2.2.2.1.1"><a href="#section-5.2.1" class="auto internal xref">5.2.1</a>.  <a href="#name-cddl-and-cbor-data-object-e" class="internal xref">CDDL and CBOR Data Object Example</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2.2.2">
+                    <p id="section-toc.1-1.5.2.2.2.2.1"><a href="#section-5.2.2" class="auto internal xref">5.2.2</a>.  <a href="#name-cose_sign1-envelope-structu" class="internal xref">COSE_Sign1 Envelope Structure</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-jose-json-realization" class="internal xref">JOSE/JSON Realization</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3.2.1">
+                    <p id="section-toc.1-1.5.2.3.2.1.1"><a href="#section-5.3.1" class="auto internal xref">5.3.1</a>.  <a href="#name-json-example" class="internal xref">JSON Example</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-common-requirements-and-dis" class="internal xref">Common Requirements and Distinctions</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-appendix-embedding-saids-in" class="internal xref">Appendix: Embedding SAIDs in URLs</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-appendix-json-schema-with-s" class="internal xref">Appendix: JSON Schema with SAIDs</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">A content-addressable identifier is derived from a serialization and is cryptographically bound to its bytes.
+This binding provides a root of trust for reasoning about the content.
+A sufficiently strong cryptographic commitment to the identifier also commits to the serialization.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">A <code>self-addressing identifier (SAID)</code> is a content-addressable identifier that is also self-referential.
+It is included in the serialization it identifies.
+This document describes the SAID derivation and verification process and the supported CESR, CBOR, JSON, and URN representations.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">The urn said is now a registered namespace at IANA <span>[<a href="#URNSAID" class="cite xref">URNSAID</a>]</span>.
+The urn said namespace uses the SAID protocol.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<div id="requirements-language">
+<section id="section-1.1">
+        <h3 id="name-requirements-language">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-requirements-language" class="section-name selfRef">Requirements Language</a>
+        </h3>
+<p id="section-1.1-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="architecture">
+<section id="section-2">
+      <h2 id="name-architecture">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-architecture" class="section-name selfRef">Architecture</a>
+      </h2>
+<p id="section-2-1">An application profile defines the schema for the data object, identifies the SAID field and placeholder procedure,
+and selects a deterministic serialization profile.
+The serialization profile specifies how to encode and decode the data object so both endpoints reproduce the same bytes.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-2-2">
+<pre>
+       Producer                       Consumer
+
++-----------------------+
+| 1. Render             |
+|    deterministic      |
+|    data object        |
+| 2. Derive SAID and    |
+|    embed in object    |
+| 3. Validate object    |
+|    against schema     |
+| 4. Encode object      |
+|    in wire format     |      +-----------------------+
+| 5. Send object        |wire-&gt;| 6. Receive data       |
++-----------------------+      |    object from wire   |
+                               | 7. Decode object      |
+                               |    using profile      |
+                               | 8. Validate object    |
+                               |    against schema     |
+                               | 9. Verify object      |
+                               |    integrity using    |
+                               |    embedded SAID      |
+                               | 10. Hand off object   |
+                               |     to application    |
+                               +-----------------------+
+</pre><a href="#section-2-2" class="pilcrow">¶</a>
+</div>
+<div id="schema-conformance">
+<section id="section-2.1">
+        <h3 id="name-schema-conformance">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-schema-conformance" class="section-name selfRef">Schema Conformance</a>
+        </h3>
+<p id="section-2.1-1">The application schema describes the permitted structure and constraints of the data object.
+The producer checks the completed data object before sending it.
+The consumer checks the decoded data object before handing it to the application.
+These checks establish conformance to the application data model; they are distinct from SAID verification.
+The schemas in this document define the allowed forms of a <code>SAID</code> value,
+not the structure of the application data object that contains it.
+An application profile defines that structure.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="said-based-payload-integrity-and-embedding">
+<section id="section-2.2">
+        <h3 id="name-said-based-payload-integrit">
+<a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-said-based-payload-integrit" class="section-name selfRef">SAID-Based Payload Integrity and Embedding</a>
+        </h3>
+<p id="section-2.2-1">The embedded SAID binds the data object to its deterministic serialization.
+Derivation replaces the SAID field with a same-length placeholder,
+serializes the data object using the shared deterministic serialization profile,
+computes the digest identified by the SAID, and places the encoded digest in the field.
+Verification repeats the process and compares the recomputed value with the embedded SAID.
+The serialization profile accounts for distinctions that affect the digest bytes, such as field order and value representation.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
+<p id="section-2.2-2">Some application profiles use a detached payload that contains its own SAID, for example vLEI <span>[<a href="#VLEI" class="cite xref">VLEI</a>]</span>.
+Such profiles are subject to the conditional requirements in Section 4.
+Applications can carry such payloads in enclosing structures,
+including signature or MAC envelopes when producer authentication is needed.
+The enclosing structures and their authentication processing are outside the scope of this document.
+A digest carried only in an envelope, and not embedded in the identified payload,
+is a content address for that payload rather than a self-referential SAID.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protocol-flow">
+<section id="section-2.3">
+        <h3 id="name-protocol-flow">
+<a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-protocol-flow" class="section-name selfRef">Protocol Flow</a>
+        </h3>
+<p id="section-2.3-1">The producer derives and embeds the SAID in the data object,
+validates the completed data object against the application schema, and encodes it in the wire format.
+The consumer receives and decodes the data object from the wire,
+validates the decoded data object against the application schema,
+verifies its integrity using the embedded SAID and shared deterministic serialization profile,
+and hands it off to the application.
+Schema validation checks the data object's conformance to the application schema;
+SAID verification checks the binding between the data object and the digest input.
+Both checks are part of the end-to-end flow shown above.<a href="#section-2.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="technology-scope">
+<section id="section-2.4">
+        <h3 id="name-technology-scope">
+<a href="#section-2.4" class="section-number selfRef">2.4. </a><a href="#name-technology-scope" class="section-name selfRef">Technology Scope</a>
+        </h3>
+<p id="section-2.4-1">The architecture is independent of a particular programming language or in-memory data structure.
+This document describes SAID representations for CESR, CBOR, JSON, and URN,
+with CDDL and JSON Schema definitions where applicable.
+Application profiles select the schema for the data object and the deterministic serialization profile.
+The Python mappings and particular digest, serialization, or envelope choices in the examples illustrate possible realizations;
+they are not prerequisites for implementing the architecture.<a href="#section-2.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="example-digest-computation-and-payload-embedding">
+<section id="section-3">
+      <h2 id="name-example-digest-computation-">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-example-digest-computation-" class="section-name selfRef">Example Digest Computation and Payload Embedding</a>
+      </h2>
+<p id="section-3-1">These examples use Python's insertion-ordered <code>dict</code>, JSON, and selected digest algorithms only for illustration.
+Implementations may use other in-memory structures; a profile may specify another wire format or supported digest,
+as long as both endpoints reproduce the same digest input.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<div id="example-computation">
+<section id="section-3.1">
+        <h3 id="name-example-computation">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-example-computation" class="section-name selfRef">Example Computation</a>
+        </h3>
+<p id="section-3.1-1">The <code>CESR</code> encoding of a <code>Blake3-256</code> 32-byte digest contains 44 Base64 URL-safe characters.
+The first character, E, identifies <code>Blake3-256</code>.
+A fixed-field serialization using that algorithm therefore reserves 44 characters for the <code>SAID</code>.
+Consider this initial serialization:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1-2">
+<pre>
+field0______field1______________________________________field2______
+</pre><a href="#section-3.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.1-3">Replace field1 with 44 placeholder characters:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1-4">
+<pre>
+field0______############################################field2______
+</pre><a href="#section-3.1-4" class="pilcrow">¶</a>
+</div>
+<p id="section-3.1-5">Computing <code>Blake3-256</code> over the placeholder serialization and encoding the digest with <code>CESR</code> produces:<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1-6">
+<pre>
+E8wYuBjhslETYaLZcxMkWrhVbMcA8RS1pKYl7nJ77ntA
+</pre><a href="#section-3.1-6" class="pilcrow">¶</a>
+</div>
+<p id="section-3.1-7">Replacing the placeholder with that <code>SAID</code> produces the final serialization:<a href="#section-3.1-7" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1-8">
+<pre>
+field0______E8wYuBjhslETYaLZcxMkWrhVbMcA8RS1pKYl7nJ77ntA______
+</pre><a href="#section-3.1-8" class="pilcrow">¶</a>
+</div>
+<p id="section-3.1-9">Verification reverses these steps.<a href="#section-3.1-9" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="serialization-generation">
+<section id="section-3.2">
+        <h3 id="name-serialization-generation">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-serialization-generation" class="section-name selfRef">Serialization Generation</a>
+        </h3>
+<div id="deterministic-in-memory-representations">
+<section id="section-3.2.1">
+          <h4 id="name-deterministic-in-memory-rep">
+<a href="#section-3.2.1" class="section-number selfRef">3.2.1. </a><a href="#name-deterministic-in-memory-rep" class="section-name selfRef">Deterministic In-Memory Representations</a>
+          </h4>
+<p id="section-3.2.1-1">The crucial consideration in <code>SAID</code> generation is reproducibility across the wire-to-memory-to-wire round trip.
+The digest input is a byte sequence received from, or prepared for, a deterministic wire format.
+The resulting in-memory representation retains every distinction needed to reconstruct the same serialization.<a href="#section-3.2.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.2.1-2">A deterministic in-memory representation preserves field order when it affects the wire format, exact value types,
+numeric representation rules, string contents, optional-field presence, tags, and application normalization choices.
+Re-encoding under the same deterministic profile produces identical bytes.
+The digest covers those reproduced wire bytes, not an implementation-specific memory layout.<a href="#section-3.2.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.2.1-3">Suitable realizations include:<a href="#section-3.2.1-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.2.1-4.1">
+              <p id="section-3.2.1-4.1.1">An insertion-ordered Python 3.7 or later dictionary paired with a fixed <code>JSON</code> serialization profile.<a href="#section-3.2.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.2.1-4.2">
+              <p id="section-3.2.1-4.2.1">Deterministic <code>CBOR</code> as described by <span>[<a href="#RFC8949" class="cite xref">RFC8949</a>]</span>.<a href="#section-3.2.1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.2.1-4.3">
+              <p id="section-3.2.1-4.3.1">ASN.1 values encoded with <code>DER</code> under ITU-T <span>[<a href="#X690" class="cite xref">X690</a>]</span>.<a href="#section-3.2.1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.2.1-5">These are examples rather than prerequisites.
+Any representation works if decoding preserves the information needed for deterministic re-encoding.
+Independent implementations must then reproduce the same bytes.<a href="#section-3.2.1-5" class="pilcrow">¶</a></p>
+<p id="section-3.2.1-6">When mapping order affects the wire format, the in-memory representation preserves that order.
+A profile can retain application-defined insertion order, sort keys, or apply schema-defined component ordering.
+Encoders and decoders apply the selected rule consistently.<a href="#section-3.2.1-6" class="pilcrow">¶</a></p>
+<p id="section-3.2.1-7">Programming-language mappings have not always preserved insertion order.
+If a native mapping lacks a stable ordering contract, an ordered mapping, schema-defined record,
+or explicit canonical sorting step establishes reproducibility.<a href="#section-3.2.1-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="example-python-dict-to-json-serialization-with-said">
+<section id="section-3.2.2">
+          <h4 id="name-example-python-dict-to-json">
+<a href="#section-3.2.2" class="section-number selfRef">3.2.2. </a><a href="#name-example-python-dict-to-json" class="section-name selfRef">Example Python dict to JSON Serialization with SAID</a>
+          </h4>
+<p id="section-3.2.2-1">These examples include a <code>schema</code> field containing the <code>SAID</code> of the general-purpose schema for <code>SAID</code>-bearing objects shown below.
+It lets a consumer identify a baseline schema for the embedded identifier fields;
+an application profile can impose additional constraints on application-specific fields.
+Including a <code>schema</code> field is a useful convention for schema discovery and validation, not a requirement of the <code>SAID</code> format.
+The examples use the common field order <code>said</code>, <code>schema</code>, <code>first</code>, <code>last</code>, <code>role</code>;
+the <code>schema</code> value remains fixed while the <code>said</code> value is replaced by a placeholder during derivation.<a href="#section-3.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2.2-2">Suppose the initial value of a Python <code>dict</code> is as follows:<a href="#section-3.2.2-2" class="pilcrow">¶</a></p>
+<div class="lang-python sourcecode" id="section-3.2.2-3">
+<pre>
+{
+  "said": "",
+  "schema": "IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first": "Sue",
+  "last": "Smith",
+  "role": "Founder"
+}
+</pre><a href="#section-3.2.2-3" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.2-4">As before, the <code>SAID</code> will be a 44-character CESR-encoded Blake3-256 digest.
+The serialization will be <code>JSON</code>.
+The <code>said</code> field value in the <code>dict</code> is to be populated with the resulting <code>SAID</code>.
+First the value of the <code>said</code> field is replaced with a 44-character dummy string:<a href="#section-3.2.2-4" class="pilcrow">¶</a></p>
+<div class="lang-python sourcecode" id="section-3.2.2-5">
+<pre>
+{
+  "said": "############################################",
+  "schema": "IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first": "Sue",
+  "last": "Smith",
+  "role": "Founder"
+}
+</pre><a href="#section-3.2.2-5" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.2-6">The <code>dict</code> is then serialized into JSON with no extra whitespace:<a href="#section-3.2.2-6" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-3.2.2-7">
+<pre>
+{
+  "said":"############################################",
+  "schema":"IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first":"Sue",
+  "last":"Smith",
+  "role":"Founder"
+}
+</pre><a href="#section-3.2.2-7" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.2-8">The Blake3-256 digest is computed on that serialization and encoded in <code>CESR</code> to provide the <code>SAID</code>:<a href="#section-3.2.2-8" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.2.2-9">
+<pre>
+E52Jj6MfPzQnAs6X3PdGybZlPjjr7_ZRbrwdxEyzLunU
+</pre><a href="#section-3.2.2-9" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.2-10">The value of the <code>said</code> field is replaced with the computed and encoded <code>SAID</code>:<a href="#section-3.2.2-10" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-3.2.2-11">
+<pre>
+{
+  "said":"E52Jj6MfPzQnAs6X3PdGybZlPjjr7_ZRbrwdxEyzLunU",
+  "schema":"IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first":"Sue",
+  "last":"Smith",
+  "role":"Founder"
+}
+</pre><a href="#section-3.2.2-11" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.2-12">The final serialization may be converted to a Python <code>dict</code> by deserializing the JSON:<a href="#section-3.2.2-12" class="pilcrow">¶</a></p>
+<div class="lang-python sourcecode" id="section-3.2.2-13">
+<pre>
+{
+  "said": "E52Jj6MfPzQnAs6X3PdGybZlPjjr7_ZRbrwdxEyzLunU",
+  "schema": "IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first": "Sue",
+  "last": "Smith",
+  "role": "Founder"
+}
+</pre><a href="#section-3.2.2-13" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.2-14">The generation steps may be reversed to verify the embedded <code>SAID</code>.
+The protocol for mappings assumes the fields in the serialization are ordered in stable, round-trippable, reproducible order,
+i.e., canonical.
+The natural canonical ordering is called <code>field insertion order</code>.<a href="#section-3.2.2-14" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="example-ordered-mapping-to-json-serialization-with-said">
+<section id="section-3.2.3">
+          <h4 id="name-example-ordered-mapping-to-">
+<a href="#section-3.2.3" class="section-number selfRef">3.2.3. </a><a href="#name-example-ordered-mapping-to-" class="section-name selfRef">Example Ordered Mapping to JSON Serialization with SAID</a>
+          </h4>
+<p id="section-3.2.3-1">The following example shows the serialized <code>JSON</code> form of the deterministic, insertion-ordered Python <code>dict</code> above.
+The same derivation applies to any in-memory representation that preserves the specified field order and value types.<a href="#section-3.2.3-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-3.2.3-2">
+<pre>
+{
+  "said":"",
+  "schema":"IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first":"Sue",
+  "last":"Smith",
+  "role":"Founder"
+}
+</pre><a href="#section-3.2.3-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.3-3">Replace "said" with a 44-character placeholder and serialize without extra whitespace:<a href="#section-3.2.3-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-3.2.3-4">
+<pre>
+{
+  "said":"############################################",
+  "schema":"IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first":"Sue",
+  "last":"Smith",
+  "role":"Founder"
+}
+</pre><a href="#section-3.2.3-4" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.3-5"><code>Blake3-256</code> over those <code>JSON</code> bytes, encoded with <code>CESR</code>, produces E52Jj6MfPzQnAs6X3PdGybZlPjjr7_ZRbrwdxEyzLunU.
+Replacing the placeholder produces:<a href="#section-3.2.3-5" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-3.2.3-6">
+<pre>
+{
+  "said":"E52Jj6MfPzQnAs6X3PdGybZlPjjr7_ZRbrwdxEyzLunU",
+  "schema":"IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first":"Sue",
+  "last":"Smith",
+  "role":"Founder"
+}
+</pre><a href="#section-3.2.3-6" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.3-7">Verification restores the placeholder, reproduces the same <code>JSON</code> bytes, and recomputes the <code>SAID</code>.<a href="#section-3.2.3-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="example-schema-immutability-using-json-schema-with-saids">
+<section id="section-3.2.4">
+          <h4 id="name-example-schema-immutability">
+<a href="#section-3.2.4" class="section-number selfRef">3.2.4. </a><a href="#name-example-schema-immutability" class="section-name selfRef">Example Schema Immutability Using JSON Schema with SAIDs</a>
+          </h4>
+<p id="section-3.2.4-1">A <code>JSON</code> Schema can use the same derivation procedure to give its "$id" field a self-referential,
+cryptographically bound identifier.
+The following general-purpose schema for <code>SAID</code>-bearing objects requires CESR-encoded <code>SAIDs</code> in the <code>said</code> and <code>schema</code> fields
+and permits additional application-defined properties.
+Requiring a <code>schema</code> field is a useful application-profile convention; the <code>SAID</code> format itself does not require it.
+The <code>schema</code> values in the examples identify this base schema.
+The placeholder serialization is:<a href="#section-3.2.4-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-3.2.4-2">
+<pre>
+{
+  "$id": "############################################",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "said": {
+      "type": "string",
+      "pattern": "^(?:(?:E|F|G|H|I)[A-Za-z0-9_-]{43}|0(?:D|E|F|G)[A-Za-z0-9_-]{86})$"
+    },
+    "schema": {
+      "type": "string",
+      "pattern": "^(?:(?:E|F|G|H|I)[A-Za-z0-9_-]{43}|0(?:D|E|F|G)[A-Za-z0-9_-]{86})$"
+    }
+  },
+  "required": ["said", "schema"],
+  "additionalProperties": true
+}
+</pre><a href="#section-3.2.4-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.4-3">Replacing the placeholder with 44 <code>#</code> characters, canonicalizing with <code>JCS</code>, and computing <code>SHA-256</code> produces
+the CESR <code>SAID</code> IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY.
+Replacing the placeholder yields:<a href="#section-3.2.4-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-3.2.4-4">
+<pre>
+{
+  "$id": "IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "said": {
+      "type": "string",
+      "pattern": "^(?:(?:E|F|G|H|I)[A-Za-z0-9_-]{43}|0(?:D|E|F|G)[A-Za-z0-9_-]{86})$"
+    },
+    "schema": {
+      "type": "string",
+      "pattern": "^(?:(?:E|F|G|H|I)[A-Za-z0-9_-]{43}|0(?:D|E|F|G)[A-Za-z0-9_-]{86})$"
+    }
+  },
+  "required": ["said", "schema"],
+  "additionalProperties": true
+}
+</pre><a href="#section-3.2.4-4" class="pilcrow">¶</a>
+</div>
+<p id="section-3.2.4-5">Data structures using embedded <code>SAIDs</code> in this way are referred to as self-addressing data (SAD).<a href="#section-3.2.4-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="discussion">
+<section id="section-3.3">
+        <h3 id="name-discussion">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-discussion" class="section-name selfRef">Discussion</a>
+        </h3>
+<p id="section-3.3-1">A recognized derivation code identifies how to verify the binding between a <code>SAID</code> and its serialization.
+A valid <code>SAID</code> confirms that the serialization reproduces the bytes used during derivation;
+a mutation produces a different identifier.
+References to other serializations by <code>SAID</code> support compact,
+tamper-evident composition without embedding the referenced content in full.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="said-schema-definitions">
+<section id="section-4">
+      <h2 id="name-said-schema-definitions">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-said-schema-definitions" class="section-name selfRef">SAID Schema Definitions</a>
+      </h2>
+<p id="section-4-1">This section defines the syntax of the supported <code>SAID</code> values.
+The CDDL fragments define the <code>said</code> type for CESR, CBOR, JSON, and URN representations.
+The JSON Schema fragments define <code>SAID</code> values represented as JSON, including CESR strings and URNs.
+CBOR representations rely exclusively on the CDDL schema expression.
+These schemas define <code>SAID</code> values, not the application data objects that contain them.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">An application profile that requires a detached payload to carry a self-referential <code>SAID</code> <span class="bcp14">MUST</span> specify the location and
+representation of the embedded <code>SAID</code> field, the placeholder used during derivation,
+and the deterministic serialization profile used to generate and verify the <code>SAID</code>.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<div id="cddl">
+<section id="section-4.1">
+        <h3 id="name-cddl">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-cddl" class="section-name selfRef">CDDL</a>
+        </h3>
+<p id="section-4.1-1">The CDDL fragments below collectively define the top-level <code>said</code> type.
+The root fragment declares the type and its representation alternatives;
+the following fragments define those alternatives in the order used to assemble the schema.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<div id="root-said-type">
+<section id="section-4.1.1">
+          <h4 id="name-root-said-type">
+<a href="#section-4.1.1" class="section-number selfRef">4.1.1. </a><a href="#name-root-said-type" class="section-name selfRef">Root <code>said</code> Type</a>
+          </h4>
+<p id="section-4.1.1-1">The root fragment defines <code>said</code> as an extensible choice over the supported representations.<a href="#section-4.1.1-1" class="pilcrow">¶</a></p>
+<div class="lang-cddl sourcecode" id="section-4.1.1-2">
+<pre>
+; The shared type is extended by the supported representation profiles.
+said = $said
+$said /= said-cbor
+$said /= said-json
+$said /= said-cesr
+$said /= said-urn
+</pre><a href="#section-4.1.1-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="urn-representation">
+<section id="section-4.1.2">
+          <h4 id="name-urn-representation">
+<a href="#section-4.1.2" class="section-number selfRef">4.1.2. </a><a href="#name-urn-representation" class="section-name selfRef">URN Representation</a>
+          </h4>
+<p id="section-4.1.2-1">The URN representation prefixes a CESR value with <code>urn:cesr:said:</code>.<a href="#section-4.1.2-1" class="pilcrow">¶</a></p>
+<div class="lang-cddl sourcecode" id="section-4.1.2-2">
+<pre>
+; The URN representation is a CESR digest prefixed with "urn:cesr:said:".
+; The URN payload is the CESR text defined by said-cesr.
+said-urn = $said-urn
+$said-urn /= "urn:cesr:said:" .cat said-cesr
+</pre><a href="#section-4.1.2-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="cbor-representation">
+<section id="section-4.1.3">
+          <h4 id="name-cbor-representation">
+<a href="#section-4.1.3" class="section-number selfRef">4.1.3. </a><a href="#name-cbor-representation" class="section-name selfRef">CBOR Representation</a>
+          </h4>
+<p id="section-4.1.3-1">The CBOR representation is either a CESR value or an array containing an integer hash algorithm identifier
+and a byte-string digest.<a href="#section-4.1.3-1" class="pilcrow">¶</a></p>
+<div class="lang-cddl sourcecode" id="section-4.1.3-2">
+<pre>
+; CBOR can carry a CESR representation or an algorithm/digest tuple.
+said-cbor = $said-cbor
+$said-cbor /= said-cesr
+$said-cbor /= said-alg-digest
+
+; hash-alg-id is from the IANA Named Information Hash Algorithm Registry.
+said-alg-digest = [
+  hash-alg-id: int
+  hash-value: bstr
+]
+</pre><a href="#section-4.1.3-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="json-representation">
+<section id="section-4.1.4">
+          <h4 id="name-json-representation">
+<a href="#section-4.1.4" class="section-number selfRef">4.1.4. </a><a href="#name-json-representation" class="section-name selfRef">JSON Representation</a>
+          </h4>
+<p id="section-4.1.4-1">The JSON representation is either a CESR value or an object containing a textual hash algorithm identifier
+and an unpadded base64url digest.<a href="#section-4.1.4-1" class="pilcrow">¶</a></p>
+<div class="lang-cddl sourcecode" id="section-4.1.4-2">
+<pre>
+; JSON can carry CESR text or an algorithm/digest object.
+said-json = $said-json
+$said-json /= said-cesr
+$said-json /= said-json-alg-digest
+
+; JSON uses a hash-algorithm name and an unpadded base64url digest.
+said-json-alg-digest = {
+  hash-alg-id: tstr
+  hash-value: tstr .regexp "[A-Za-z0-9_-]+"
+}
+</pre><a href="#section-4.1.4-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="cesr-representation">
+<section id="section-4.1.5">
+          <h4 id="name-cesr-representation">
+<a href="#section-4.1.5" class="section-number selfRef">4.1.5. </a><a href="#name-cesr-representation" class="section-name selfRef">CESR Representation</a>
+          </h4>
+<p id="section-4.1.5-1">The CESR representation combines a derivation code with base64url-encoded digest text.
+The schema defines codes and digest-text lengths for 256-bit and 512-bit digest values.<a href="#section-4.1.5-1" class="pilcrow">¶</a></p>
+<div class="lang-cddl sourcecode" id="section-4.1.5-2">
+<pre>
+; CESR text is a digest-algorithm code followed by encoded digest text.
+said-cesr = $said-cesr
+$said-cesr /= said-cesr-256
+$said-cesr /= said-cesr-512
+
+said-cesr-256 = $said-cesr-256
+$said-cesr-256 /= "E" .cat said-cesr-256-text ; Blake3-256
+$said-cesr-256 /= "F" .cat said-cesr-256-text ; Blake2b-256
+$said-cesr-256 /= "G" .cat said-cesr-256-text ; Blake2s-256
+$said-cesr-256 /= "H" .cat said-cesr-256-text ; SHA3-256
+$said-cesr-256 /= "I" .cat said-cesr-256-text ; SHA2-256
+said-cesr-256-text = (tstr .size 43) .regexp "[A-Za-z0-9_-]+"
+
+said-cesr-512 = $said-cesr-512
+$said-cesr-512 /= "0D" .cat said-cesr-512-text ; Blake3-512
+$said-cesr-512 /= "0E" .cat said-cesr-512-text ; Blake2b-512
+$said-cesr-512 /= "0F" .cat said-cesr-512-text ; SHA3-512
+$said-cesr-512 /= "0G" .cat said-cesr-512-text ; SHA2-512
+said-cesr-512-text = (tstr .size 86) .regexp "[A-Za-z0-9_-]+"
+</pre><a href="#section-4.1.5-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="json-schema">
+<section id="section-4.2">
+        <h3 id="name-json-schema">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-json-schema" class="section-name selfRef">JSON Schema</a>
+        </h3>
+<p id="section-4.2-1">The JSON Schema fragments below collectively define a schema for JSON-encoded <code>SAID</code> values.
+The root schema provides the <code>said</code> entry point;
+the remaining fragments add definitions for URN, JSON, and CESR representations.
+The fragments are combined by adding their <code>definitions</code> to the root schema's <code>definitions</code> object.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<div id="root-said-schema">
+<section id="section-4.2.1">
+          <h4 id="name-root-said-schema">
+<a href="#section-4.2.1" class="section-number selfRef">4.2.1. </a><a href="#name-root-said-schema" class="section-name selfRef">Root <code>said</code> Schema</a>
+          </h4>
+<p id="section-4.2.1-1">The root schema selects either a JSON representation or a URN representation.<a href="#section-4.2.1-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-4.2.1-2">
+<pre>
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Top-level JSON Schema for the supported SAID representations.",
+  "allOf": [
+    {
+      "$ref": "#/definitions/said"
+    }
+  ],
+  "definitions": {
+    "said": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-json"
+        },
+        {
+          "$ref": "#/definitions/said-urn"
+        }
+      ]
+    }
+  }
+}
+</pre><a href="#section-4.2.1-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="urn-schema">
+<section id="section-4.2.2">
+          <h4 id="name-urn-schema">
+<a href="#section-4.2.2" class="section-number selfRef">4.2.2. </a><a href="#name-urn-schema" class="section-name selfRef">URN Schema</a>
+          </h4>
+<p id="section-4.2.2-1">The URN schema restricts a string to the <code>urn:cesr:said:</code> prefix followed by a valid CESR value.<a href="#section-4.2.2-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-4.2.2-2">
+<pre>
+{
+  "definitions": {
+    "said-urn": {
+      "$comment": "A CESR SAID carried in the urn:cesr:said: namespace.",
+      "type": "string",
+      "pattern": "^urn:cesr:said:(?:(?:E|F|G|H|I)[A-Za-z0-9_-]{43}|0(?:D|E|F|G)[A-Za-z0-9_-]{86})$"
+    }
+  }
+}
+</pre><a href="#section-4.2.2-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="json-object-representation-schema">
+<section id="section-4.2.3">
+          <h4 id="name-json-object-representation-">
+<a href="#section-4.2.3" class="section-number selfRef">4.2.3. </a><a href="#name-json-object-representation-" class="section-name selfRef">JSON Object Representation Schema</a>
+          </h4>
+<p id="section-4.2.3-1">The JSON schema accepts a CESR string or an object containing a hash algorithm identifier
+and a base64url digest string.<a href="#section-4.2.3-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-4.2.3-2">
+<pre>
+{
+  "definitions": {
+    "said-json": {
+      "$comment": "JSON carries CESR text or an algorithm/digest object.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-cesr"
+        },
+        {
+          "$ref": "#/definitions/said-json-alg-digest"
+        }
+      ]
+    },
+    "said-json-alg-digest": {
+      "$comment": "The digest is unpadded base64url text.",
+      "type": "object",
+      "properties": {
+        "hash-alg-id": {
+          "type": "string"
+        },
+        "hash-value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "hash-alg-id",
+        "hash-value"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
+</pre><a href="#section-4.2.3-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="cesr-schema">
+<section id="section-4.2.4">
+          <h4 id="name-cesr-schema">
+<a href="#section-4.2.4" class="section-number selfRef">4.2.4. </a><a href="#name-cesr-schema" class="section-name selfRef">CESR Schema</a>
+          </h4>
+<p id="section-4.2.4-1">The CESR schema restricts strings to the supported derivation codes and digest-text lengths.<a href="#section-4.2.4-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-4.2.4-2">
+<pre>
+{
+  "definitions": {
+    "said-cesr": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-cesr-256"
+        },
+        {
+          "$ref": "#/definitions/said-cesr-512"
+        }
+      ]
+    },
+    "said-cesr-256": {
+      "$comment": "A CESR 256-bit digest code and 43 base64url characters.",
+      "type": "string",
+      "pattern": "^(?:E|F|G|H|I)[A-Za-z0-9_-]{43}$"
+    },
+    "said-cesr-512": {
+      "$comment": "A CESR 512-bit digest code and 86 base64url characters.",
+      "type": "string",
+      "pattern": "^0(?:D|E|F|G)[A-Za-z0-9_-]{86}$"
+    }
+  }
+}
+</pre><a href="#section-4.2.4-2" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="realizing-said-like-properties-with-cesr-cose-and-jose">
+<section id="section-5">
+      <h2 id="name-realizing-said-like-propert">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-realizing-said-like-propert" class="section-name selfRef">Realizing SAID-Like Properties with CESR, COSE, and JOSE</a>
+      </h2>
+<p id="section-5-1">The properties provided by a <code>SAID</code> can be realized through multiple representation and security frameworks.
+Each realization requires a deterministic mapping from an application data model to bytes,
+an unambiguous indication of the digest algorithm and digest value,
+and verification rules that bind those bytes to the identifier.
+The following subsections distinguish the native <code>CESR</code> construction from profiles based on <code>COSE</code>/<code>CBOR</code> and <code>JOSE</code>/<code>JSON</code>.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="cesr-realization">
+<section id="section-5.1">
+        <h3 id="name-cesr-realization">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-cesr-realization" class="section-name selfRef">CESR Realization</a>
+        </h3>
+<p id="section-5.1-1">The <code>CESR</code> realization defined by this document embeds the encoded digest in the serialization itself.
+Its derivation code identifies the digest algorithm and encoding.
+The dummy-value procedure resolves the circularity of hashing content that contains its own identifier.
+This construction provides both content addressing and self-reference.
+The identifier is a field in the exact serialization to which it is cryptographically bound.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-2">The primary expression of a <code>CESR</code> primitive is textual and uses Base64 URL-safe characters.
+CESR primitives can be round-tripped to a compact binary representation without loss.
+The derivation code enables digest algorithm agility by identifying the algorithm used for each <code>SAID</code>.
+<code>CESR</code> was developed for the <span>[<a href="#KERI" class="cite xref">KERI</a>]</span> protocol.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="cosecbor-realization">
+<section id="section-5.2">
+        <h3 id="name-cose-cbor-realization">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-cose-cbor-realization" class="section-name selfRef">COSE/CBOR Realization</a>
+        </h3>
+<p id="section-5.2-1"><span>[<a href="#RFC9995" class="cite xref">RFC9995</a>]</span> defines <code>COSE</code> hash envelopes by adding protected-header parameters that identify the payload hash algorithm,
+the media type or content format of the preimage, and optionally a location from which the preimage can be retrieved.
+A <code>SAID</code>-like profile can use these parameters as follows:<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-2">The following steps illustrate one possible <code>COSE</code> hash-envelope construction.
+Applications that need producer authentication can place the hash envelope in an enclosing signature or MAC structure;
+those structures and their authentication processing are outside the scope of this specification.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.2-3">
+<li id="section-5.2-3.1">
+            <p id="section-5.2-3.1.1">Encode the application data using a specified deterministic <code>CBOR</code> profile consistent with Section 4.2 of <span>[<a href="#RFC8949" class="cite xref">RFC8949</a>]</span>.
+The application profile must resolve choices that could produce different byte strings for equivalent data.<a href="#section-5.2-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.2-3.2">
+            <p id="section-5.2-3.2.1">Compute the selected cryptographic digest over those deterministic <code>CBOR</code> bytes.
+The digest functions as the content-addressable identifier for that byte representation.<a href="#section-5.2-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.2-3.3">
+            <p id="section-5.2-3.3.1">Construct an <span>[<a href="#RFC9995" class="cite xref">RFC9995</a>]</span> hash envelope containing the digest.
+Its protected header identifies the payload hash algorithm.
+The preimage content type and location parameters can be supplied when needed for interpretation or discovery.<a href="#section-5.2-3.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.2-3.4">
+            <p id="section-5.2-3.4.1">An application profile can protect the hash envelope with a <code>COSE</code> signature or MAC when producer authentication is needed.
+A verifier can validate that protection over the envelope and its digest without access to the detached preimage.
+When the application data is available, the verifier deterministically encodes it under the same application profile,
+recomputes the digest, and compares the result with the envelope payload.<a href="#section-5.2-3.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-5.2-4">This construction provides deterministic content addressing and a cryptographic commitment to detached content.
+It does not by itself produce a self-referential <code>SAID</code>.
+An application profile must embed the digest in the payload to make it self-referential.
+It must also follow the detached-payload convention in Section 2.2.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
+<p id="section-5.2-5">The following examples show an application-specific data object and an illustrative <code>COSE_Sign1</code> envelope.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
+<div id="cddl-and-cbor-data-object-example">
+<section id="section-5.2.1">
+          <h4 id="name-cddl-and-cbor-data-object-e">
+<a href="#section-5.2.1" class="section-number selfRef">5.2.1. </a><a href="#name-cddl-and-cbor-data-object-e" class="section-name selfRef">CDDL and CBOR Data Object Example</a>
+          </h4>
+<p id="section-5.2.1-1">The ordered-mapping example in Section 3.2.3 is represented here as a <code>CBOR</code> data object.
+This example's deterministic serialization profile preserves the application-defined map order shown below;
+it does not use the core deterministic map-key ordering rules in <span>[<a href="#RFC8949" class="cite xref">RFC8949</a>]</span>.
+The inline <code>CDDL</code> defines the required <code>said</code> and <code>schema</code> fields and an extension point for application-defined fields.
+The Sue Smith example extends it with <code>first</code>, <code>last</code>, and <code>role</code>.<a href="#section-5.2.1-1" class="pilcrow">¶</a></p>
+<div class="lang-cddl sourcecode" id="section-5.2.1-2">
+<pre>
+said-example = {
+  "said"   =&gt; said-cesr,
+  "schema" =&gt; said-cesr,
+  * $$said-example-map-extension
+}
+
+$$said-example-map-extension //= (
+  "first" =&gt; tstr,
+  "last"  =&gt; tstr,
+  "role"  =&gt; tstr
+)
+</pre><a href="#section-5.2.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-5.2.1-3">The placeholder form used for derivation replaces the <code>said</code> value with 44 <code>#</code> characters.
+This intermediate form is not a valid <code>said-example</code>, because the placeholder is not a CESR <code>SAID</code>.<a href="#section-5.2.1-3" class="pilcrow">¶</a></p>
+<div class="lang-cbor-diag sourcecode" id="section-5.2.1-4">
+<pre>
+{
+  "said": "############################################",
+  "schema": "IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first": "Sue",
+  "last": "Smith",
+  "role": "Founder"
+}
+</pre><a href="#section-5.2.1-4" class="pilcrow">¶</a>
+</div>
+<p id="section-5.2.1-5">Encoding this data object with the example's ordered-map <code>CBOR</code> profile and computing <code>SHA-256</code> produces:<a href="#section-5.2.1-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.2.1-6">
+<pre>
+0e83f2c5a0a41215979410a1e4d7981b8fc0b338d073190609c5f6c813496ab3
+</pre><a href="#section-5.2.1-6" class="pilcrow">¶</a>
+</div>
+<p id="section-5.2.1-7">Encoding the digest with the <code>CESR</code> derivation code for <code>SHA-256</code> produces the embedded <code>SAID</code>:<a href="#section-5.2.1-7" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.2.1-8">
+<pre>
+IDoPyxaCkEhWXlBCh5NeYG4_AszjQcxkGCcX2yBNJarM
+</pre><a href="#section-5.2.1-8" class="pilcrow">¶</a>
+</div>
+<p id="section-5.2.1-9">The final data object replaces the placeholder with that <code>SAID</code>:<a href="#section-5.2.1-9" class="pilcrow">¶</a></p>
+<div class="lang-cbor-diag sourcecode" id="section-5.2.1-10">
+<pre>
+{
+  "said": "IDoPyxaCkEhWXlBCh5NeYG4_AszjQcxkGCcX2yBNJarM",
+  "schema": "IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first": "Sue",
+  "last": "Smith",
+  "role": "Founder"
+}
+</pre><a href="#section-5.2.1-10" class="pilcrow">¶</a>
+</div>
+<p id="section-5.2.1-11">The final data object conforms to <code>said-example</code>, and its <code>said</code> value conforms to <code>said-cesr</code>.
+To verify the <code>SAID</code>, validate the data object, replace its <code>said</code> value with the same 44-character placeholder,
+encode the resulting map using the same ordered-map <code>CBOR</code> profile,
+recompute the <code>SHA-256</code> digest, and compare the resulting CESR value with the embedded <code>SAID</code>.<a href="#section-5.2.1-11" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="cosesign1-envelope-structure">
+<section id="section-5.2.2">
+          <h4 id="name-cose_sign1-envelope-structu">
+<a href="#section-5.2.2" class="section-number selfRef">5.2.2. </a><a href="#name-cose_sign1-envelope-structu" class="section-name selfRef">COSE_Sign1 Envelope Structure</a>
+          </h4>
+<p id="section-5.2.2-1">The following illustrative <code>CDDL</code> describes a <code>COSE_Sign1</code> envelope whose byte-string payload contains a CBOR-encoded <code>SAID</code>.<a href="#section-5.2.2-1" class="pilcrow">¶</a></p>
+<div class="lang-cddl sourcecode" id="section-5.2.2-2">
+<pre>
+COSE_Sign1 = #6.18([
+  protected   : bstr .cbor protected-header,
+  unprotected : {},
+  payload     : bstr .cbor said,
+  signature   : bstr
+])
+
+protected-header = {
+  ; COSE signature algorithm identifier
+  1   =&gt; int,
+  ; Hash algorithm used to produce the payload SAID
+  258 =&gt; int,
+  ; Content type of the detached preimage
+  259 =&gt; "application/cbor"
+}
+</pre><a href="#section-5.2.2-2" class="pilcrow">¶</a>
+</div>
+<p id="section-5.2.2-3">Protected-header parameter 1 identifies the <code>COSE</code> signature algorithm,
+parameter 258 identifies the hash algorithm used to produce the payload <code>SAID</code>,
+and parameter 259 identifies the preimage content type.
+The envelope payload contains the <code>CBOR</code> encoding of the <code>SAID</code> for <code>said-example</code>.
+That <code>SAID</code> is computed from the deterministic <code>CBOR</code> encoding of its placeholder form.
+Any <code>COSE</code> protection is validated according to the application profile.<a href="#section-5.2.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="josejson-realization">
+<section id="section-5.3">
+        <h3 id="name-jose-json-realization">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-jose-json-realization" class="section-name selfRef">JOSE/JSON Realization</a>
+        </h3>
+<p id="section-5.3-1"><code>JOSE</code> provides <code>JSON</code>-based signature and MAC containers through <code>JWS</code> as defined by <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>.
+Because <code>JSON</code> permits multiple textual representations of the same data model,
+a <code>SAID</code>-like <code>JOSE</code> profile first specifies an invariant byte representation.
+<span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span> <code>JSON</code> Canonicalization Scheme (<code>JCS</code>) is one suitable profile: it constrains input to <code>I-JSON</code>,
+serializes primitives consistently, sorts object properties deterministically, and emits UTF-8.<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<p id="section-5.3-2">A <code>JOSE</code> realization can proceed as follows:<a href="#section-5.3-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.3-3">
+<li id="section-5.3-3.1">
+            <p id="section-5.3-3.1.1">Canonicalize the application <code>JSON</code> using <code>JCS</code> or another explicitly identified deterministic <code>JSON</code> profile.<a href="#section-5.3-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.3-3.2">
+            <p id="section-5.3-3.2.1">Compute a digest over the canonical UTF-8 bytes.
+Encode it using unambiguous base64url.
+The application profile fixes the digest algorithm and canonicalization profile.
+Protected parameters may identify them, but verifiers must understand those parameters.<a href="#section-5.3-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.3-3.3">
+            <p id="section-5.3-3.3.1">Place the base64url-encoded digest in a profiled protected-header parameter.
+List that parameter in "crit" so that a verifier recognizes the hash-envelope processing rules.
+Omit the <code>JWS</code> payload from the <code>JSON</code> serialization.
+The signature covers the protected header containing the digest;
+the detached application data is used only to recompute and compare that digest.<a href="#section-5.3-3.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.3-3.4">
+            <p id="section-5.3-3.4.1">A verifier validates the <code>JWS</code> protected header and signature, obtains the application data separately,
+restores any defined placeholder, canonicalizes the <code>JSON</code> under the identified profile, recomputes the digest,
+and compares it with the digest carried in the protected header.<a href="#section-5.3-3.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-5.3-4"><code>JOSE</code> does not currently register a general-purpose hash-envelope digest header equivalent to <span>[<a href="#RFC9995" class="cite xref">RFC9995</a>]</span>.
+The example below therefore uses illustrative profiled parameter names.
+A closed profile can define private names,
+while interoperable deployment calls for registered or collision-resistant names and explicit critical-parameter processing.
+As with the <code>COSE</code> profile, this provides deterministic content addressing and a cryptographic commitment.
+The application profile must define an embedded identifier field and placeholder or exclusion rule for native self-reference.<a href="#section-5.3-4" class="pilcrow">¶</a></p>
+<div id="json-example">
+<section id="section-5.3.1">
+          <h4 id="name-json-example">
+<a href="#section-5.3.1" class="section-number selfRef">5.3.1. </a><a href="#name-json-example" class="section-name selfRef">JSON Example</a>
+          </h4>
+<p id="section-5.3.1-1">The application data is the same structure used in Section 3.2.2:<a href="#section-5.3.1-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-5.3.1-2">
+<pre>
+{
+  "said": "",
+  "schema": "IH3Nj8qCy--8DKS8e1h9sb69OTNYCKM1iRF3OvTzRimY",
+  "first": "Sue",
+  "last": "Smith",
+  "role": "Founder"
+}
+</pre><a href="#section-5.3.1-2" class="pilcrow">¶</a>
+</div>
+<p id="section-5.3.1-3">After replacing "said" with the profile-defined placeholder, the structure is canonicalized with <code>JCS</code> and hashed with <code>SHA-256</code>.
+The digest is base64url encoded and placed in the protected header.
+The following flattened <code>JWS</code> <code>JSON</code> serialization illustrates the envelope before base64url encoding of the protected header:<a href="#section-5.3.1-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-5.3.1-4">
+<pre>
+{
+  "protected": {
+    "alg": "ES256",
+    "crit":
+      ["payload-digest",
+      "payload-digest-alg",
+      "payload-canonicalization"],
+    "payload-digest": "&lt;base64url(SHA-256(JCS(placeholder-form)))&gt;",
+    "payload-digest-alg": "sha-256",
+    "payload-canonicalization": "jcs",
+    "cty": "application/json"
+  },
+  "signature": "&lt;base64url(signature)&gt;"
+}
+</pre><a href="#section-5.3.1-4" class="pilcrow">¶</a>
+</div>
+<p id="section-5.3.1-5">In an actual <code>JWS</code> <code>JSON</code> serialization, "protected" is the base64url encoding of the UTF-8 <code>JSON</code> protected-header object,
+not the object shown inline above.
+The top-level "payload" member is absent.
+A verifier decodes and validates the protected header, obtains the application data out of band,
+reconstructs the placeholder form, applies <code>JCS</code>, recomputes <code>SHA-256</code>, and compares the result with "payload-digest".
+The names beginning with "payload-" are illustrative profile parameters and are not registered <code>JOSE</code> header parameters.<a href="#section-5.3.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="common-requirements-and-distinctions">
+<section id="section-5.4">
+        <h3 id="name-common-requirements-and-dis">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-common-requirements-and-dis" class="section-name selfRef">Common Requirements and Distinctions</a>
+        </h3>
+<p id="section-5.4-1">All three realizations depend on collision-resistant digests, deterministic serialization, explicit algorithm identification,
+and exact verification rules.
+<code>CESR</code> integrates these elements into an identifier designed for self-reference.
+<code>COSE</code> with <span>[<a href="#RFC9995" class="cite xref">RFC9995</a>]</span> standardizes a signed or MAC-protected hash envelope for <code>CBOR</code>-oriented systems.
+<code>JOSE</code> can provide analogous behavior for <code>JSON</code>-oriented systems.
+Such a profile combines deterministic <code>JSON</code> canonicalization with a defined digest envelope.
+Implementations do not treat semantic equivalence after parsing as sufficient;
+verification is performed over the exact deterministic byte representation prescribed by the applicable profile.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-6">
+      <h2 id="name-security-considerations">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-6-1">Security depends on the selected digest algorithm's collision and second-preimage resistance.
+It also depends on consistent implementation of the deterministic serialization profile.
+A verifier that uses different field ordering, type conversion, normalization, placeholder,
+or exclusion rules can compute a different digest from the producer.
+Profiles therefore need to identify the digest algorithm, deterministic encoding rules, placeholder or exclusion procedure,
+and protected metadata needed to interpret the digest.
+Implementations should reject unsupported algorithms and profiles, malformed or ambiguous serializations,
+duplicate map keys or object member names, and protected parameters they do not understand.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-6-2">A valid <code>SAID</code> demonstrates integrity of the identified serialization; it does not by itself authenticate its producer,
+establish authorization or trust, or provide freshness or confidentiality.
+A protocol or application profile requiring authenticated origin must specify an authentication mechanism.
+It must also define the key and trust rules and apply that mechanism.
+Successful <code>SAID</code> verification alone does not provide evidence of the producer's identity or authorization.
+The <code>COSE_Sign1</code> example in this document is illustrative and does not make use of <code>COSE</code> signing a requirement.<a href="#section-6-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-7">
+      <h2 id="name-iana-considerations">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-7-1">This document has no IANA actions.<a href="#section-7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="appendix-embedding-saids-in-urls">
+<section id="section-8">
+      <h2 id="name-appendix-embedding-saids-in">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-appendix-embedding-saids-in" class="section-name selfRef">Appendix: Embedding SAIDs in URLs</a>
+      </h2>
+<p id="section-8-1">A <code>SAID</code> can serve as a stable content identifier while discovery information is maintained separately.
+An application can include the compact <code>SAID</code> in a protocol message or data structure,
+then use DNS-based discovery to locate a URI for a service or server from which the detached payload can be retrieved.
+After retrieval, the application verifies the payload against the <code>SAID</code>.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">Separating integrity from discovery reduces message and data-structure size.
+The <code>SAID</code> still provides a cryptographic commitment to the referenced content.
+The <code>SAID</code> identifies the content; DNS and the resolved URI identify a current retrieval location.
+A change to that location for administrative reasons, such as a company domain-name change or service migration,
+does not alter the content bytes and therefore does not invalidate existing commitments to the <code>SAID</code>.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-3">The KERI community refers to this discovery pattern as an Out-of-Band Introduction (<code>OOBI</code>).
+An <code>OOBI</code> associates a stable identifier with discovery information.
+Clients use that information to find the entity's current endpoint or resources for interaction or content retrieval.<a href="#section-8-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="appendix-json-schema-with-saids">
+<section id="section-9">
+      <h2 id="name-appendix-json-schema-with-s">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-appendix-json-schema-with-s" class="section-name selfRef">Appendix: JSON Schema with SAIDs</a>
+      </h2>
+<p id="section-9-1">This appendix will define normative rules for using <code>SAIDs</code> to make JSON Schema immutable and prevent schema malleability attacks.<a href="#section-9-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-10">
+      <h2 id="name-references">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-10.1">
+        <h3 id="name-normative-references">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="CESR">[CESR]</dt>
+        <dd>
+<span class="refAuthor">Smith, S.</span>, <span class="refTitle">"Composable Event Streaming Representation (CESR)"</span>, <time datetime="2021" class="refDate">2021</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/draft-ssmith-cesr/">https://datatracker.ietf.org/doc/draft-ssmith-cesr/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7515">[RFC7515]</dt>
+        <dd>
+<span class="refAuthor">Jones, J Bradley, and N Sakimura, M.</span>, <span class="refTitle">"JSON Web Signature (JWS)"</span>, <span class="seriesInfo">RFC 7515 </span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7515">https://www.rfc-editor.org/rfc/rfc7515</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7797">[RFC7797]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refTitle">"JSON Web Signature (JWS) Unencoded Payload Option"</span>, <span class="seriesInfo">RFC 7797 </span>, <time datetime="2016-02" class="refDate">February 2016</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc7797">https://www.rfc-editor.org/rfc/rfc7797</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8785">[RFC8785]</dt>
+        <dd>
+<span class="refAuthor">Rundgren, B Jordan, and S Erdtman, A.</span>, <span class="refTitle">"JSON Canonicalization Scheme (JCS)"</span>, <span class="seriesInfo">RFC 8785 </span>, <time datetime="2020-06" class="refDate">June 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8785">https://www.rfc-editor.org/rfc/rfc8785</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8949">[RFC8949]</dt>
+        <dd>
+<span class="refAuthor">Bormann and P Hoffman, C.</span>, <span class="refTitle">"Concise Binary Object Representation (CBOR)"</span>, <span class="seriesInfo">RFC 8949 </span>, <time datetime="2020-12" class="refDate">December 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8949">https://www.rfc-editor.org/rfc/rfc8949</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="X690">[X690]</dt>
+      <dd>
+<span class="refAuthor">ITU-T</span>, <span class="refTitle">"ASN.1 encoding rules: Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished Encoding Rules (DER)"</span>, <span class="seriesInfo">Recommendation X.690 </span>, <time datetime="2021-02" class="refDate">February 2021</time>, <span>&lt;<a href="https://www.itu.int/rec/T-REC-X.690">https://www.itu.int/rec/T-REC-X.690</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-10.2">
+        <h3 id="name-informative-references">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="KERI">[KERI]</dt>
+        <dd>
+<span class="refAuthor">Smith, S.</span>, <span class="refTitle">"Key Event Receipt Infrastructure (KERI)"</span>, <time datetime="2021" class="refDate">2021</time>, <span>&lt;<a href="https://arxiv.org/abs/1907.02143">https://arxiv.org/abs/1907.02143</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9995">[RFC9995]</dt>
+        <dd>
+<span class="refAuthor">Steele, S Lasker, and H Birkholz, O.</span>, <span class="refTitle">"CBOR Object Signing and Encryption (COSE) Hash Envelope"</span>, <span class="seriesInfo">RFC 9995 </span>, <time datetime="2026-07" class="refDate">July 2026</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9995">https://www.rfc-editor.org/rfc/rfc9995</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="URNSAID">[URNSAID]</dt>
+        <dd>
+<span class="refAuthor">Chu, W.</span>, <span class="refTitle">"urn said namespace registration"</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://www.iana.org/assignments/urn-namespaces/urn-formal/said">https://www.iana.org/assignments/urn-namespaces/urn-formal/said</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="VLEI">[VLEI]</dt>
+      <dd>
+<span class="refAuthor">Global Legal Entity Identifier Foundation</span>, <span class="refTitle">"Legal Entity vLEI Credential Schema"</span>, <time datetime="2023-11" class="refDate">November 2023</time>, <span>&lt;<a href="https://github.com/GLEIF-IT/vLEI-schema/blob/97850396f504bf8c4e19a42af3290e4b2618f50e/legal-entity-vLEI-credential.json">https://github.com/GLEIF-IT/vLEI-schema/blob/97850396f504bf8c4e19a42af3290e4b2618f50e/legal-entity-vLEI-credential.json</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-A">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-A-1">Members of the KERIpy development team and the ToIP ACDC Working Group.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-B">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">S. Smith</span></div>
+<div dir="auto" class="left"><span class="org">ProSapien LLC</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:sam@prosapien.com" class="email">sam@prosapien.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">N. Smith</span></div>
+<div dir="auto" class="left"><span class="org">EntropyWorks LLC</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:entropyworks@outlook.com" class="email">entropyworks@outlook.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
