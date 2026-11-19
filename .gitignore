@@ -13,4 +13,7 @@ archive.json
 draft-ssmith-said.xml
 lib
 report.xml
+cddl/said-autogen.cddl
+jsons/said-autogen.schema.json
+examples/cbor/said-cbor-test.cddl
 venv/

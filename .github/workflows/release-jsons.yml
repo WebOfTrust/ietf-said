@@ -1,0 +1,74 @@
+name: Publish SAID JSON Schema
+
+on:
+  push:
+    tags:
+      - "jsons-*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble JSON Schema export
+        run: make -C jsons stream
+
+      - name: Upload JSON Schema artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: said-json-schema
+          path: exports/said.schema.json
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download JSON Schema artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: said-json-schema
+          path: dist
+
+      - name: Attach JSON Schema to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/said.schema.json
+
+  update-export:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download JSON Schema artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: said-json-schema
+          path: dist
+
+      - name: Update well-known export
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          mkdir -p exports
+          cp dist/said.schema.json exports/said.schema.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add exports/said.schema.json
+          if git diff --cached --quiet; then
+            echo "exports/said.schema.json is already up to date"
+            exit 0
+          fi
+          git commit -m "Update said.schema.json export for ${RELEASE_TAG}"
+          git push origin "HEAD:${DEFAULT_BRANCH}"

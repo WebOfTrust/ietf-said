@@ -1,0 +1,33 @@
+{
+  "definitions": {
+    "said-json": {
+      "$comment": "JSON carries CESR text or an algorithm/digest object.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/said-cesr"
+        },
+        {
+          "$ref": "#/definitions/said-json-alg-digest"
+        }
+      ]
+    },
+    "said-json-alg-digest": {
+      "$comment": "The digest is unpadded base64url text.",
+      "type": "object",
+      "properties": {
+        "hash-alg-id": {
+          "type": "string"
+        },
+        "hash-value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "hash-alg-id",
+        "hash-value"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

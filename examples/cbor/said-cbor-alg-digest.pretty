@@ -1,0 +1,4 @@
+82                                      # array(2)
+   01                                   # unsigned(1)
+   58 20                                # bytes(32)
+      edeaaff3f1774ad2888673770c6d64097e391bc362d7d6fb34982ddf0efd18cb # "\xED\xEA\xAF\xF3\xF1wJ҈\x86sw\fmd\t~9\e\xC3b\xD7\xD6\xFB4\x98-\xDF\u000E\xFD\u0018\xCB"

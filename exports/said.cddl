@@ -1,0 +1,49 @@
+; The shared type is extended by the supported representation profiles.
+said = $said
+$said /= said-cbor
+$said /= said-json
+$said /= said-cesr
+$said /= said-urn
+; The URN representation is a CESR digest prefixed with "urn:cesr:said:".
+; The URN payload is the CESR text defined by said-cesr.
+said-urn = $said-urn
+$said-urn /= "urn:cesr:said:" .cat said-cesr
+; CBOR can carry a CESR representation or an algorithm/digest tuple.
+said-cbor = $said-cbor
+$said-cbor /= said-cesr
+$said-cbor /= said-alg-digest
+
+; hash-alg-id is from the IANA Named Information Hash Algorithm Registry.
+said-alg-digest = [
+  hash-alg-id: int
+  hash-value: bstr
+]
+; JSON can carry CESR text or an algorithm/digest object.
+said-json = $said-json
+$said-json /= said-cesr
+$said-json /= said-json-alg-digest
+
+; JSON uses a hash-algorithm name and an unpadded base64url digest.
+said-json-alg-digest = {
+  hash-alg-id: tstr
+  hash-value: tstr .regexp "[A-Za-z0-9_-]+"
+}
+; CESR text is a digest-algorithm code followed by encoded digest text.
+said-cesr = $said-cesr
+$said-cesr /= said-cesr-256
+$said-cesr /= said-cesr-512
+
+said-cesr-256 = $said-cesr-256
+$said-cesr-256 /= "E" .cat said-cesr-256-text ; Blake3-256
+$said-cesr-256 /= "F" .cat said-cesr-256-text ; Blake2b-256
+$said-cesr-256 /= "G" .cat said-cesr-256-text ; Blake2s-256
+$said-cesr-256 /= "H" .cat said-cesr-256-text ; SHA3-256
+$said-cesr-256 /= "I" .cat said-cesr-256-text ; SHA2-256
+said-cesr-256-text = (tstr .size 43) .regexp "[A-Za-z0-9_-]+"
+
+said-cesr-512 = $said-cesr-512
+$said-cesr-512 /= "0D" .cat said-cesr-512-text ; Blake3-512
+$said-cesr-512 /= "0E" .cat said-cesr-512-text ; Blake2b-512
+$said-cesr-512 /= "0F" .cat said-cesr-512-text ; SHA3-512
+$said-cesr-512 /= "0G" .cat said-cesr-512-text ; SHA2-512
+said-cesr-512-text = (tstr .size 86) .regexp "[A-Za-z0-9_-]+"
