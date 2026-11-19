@@ -176,6 +176,23 @@ The serialization profile specifies how to encode and decode the data object so 
                                +-----------------------+
 ~~~
 
+## Technology Scope
+
+The architecture is independent of a particular programming language or in-memory data structure.
+This document describes SAID representations for CESR, CBOR, JSON, and URN,
+with CDDL and JSON Schema definitions where applicable.
+Application profiles select the schema for the data object and the deterministic serialization profile.
+The Python mappings and particular digest, serialization, or envelope choices in the examples illustrate possible realizations;
+they are not prerequisites for implementing the architecture.
+
+## Integrity Principle
+
+An authenticatable data serialization is digitally signed using a non-repudiable asymmetric-key signature scheme.
+A verifier with the corresponding public key can validate the signature and attribute the serialization to its signer.
+Such serializations may contain self-referential identifiers and references to other serializations.
+An unbound identifier is only a label: anyone can copy it into different content and claim that content is the one it identifies.
+This can leave the same data with two identifiers—a self-referential but unbound label and an externally tracked content address.
+
 ## Schema Conformance
 
 The application schema describes the permitted structure and constraints of the data object.
@@ -214,15 +231,6 @@ and hands it off to the application.
 Schema validation checks the data object's conformance to the application schema;
 SAID verification checks the binding between the data object and the digest input.
 Both checks are part of the end-to-end flow shown above.
-
-## Technology Scope
-
-The architecture is independent of a particular programming language or in-memory data structure.
-This document describes SAID representations for CESR, CBOR, JSON, and URN,
-with CDDL and JSON Schema definitions where applicable.
-Application profiles select the schema for the data object and the deterministic serialization profile.
-The Python mappings and particular digest, serialization, or envelope choices in the examples illustrate possible realizations;
-they are not prerequisites for implementing the architecture.
 
 # Example Digest Computation and Payload Embedding
 
