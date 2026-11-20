@@ -1,0 +1,47 @@
+# Adapted from vLEI's Makefile.imports.template; see docs/EXPORT_GUIDELINES.md.
+# Include this file in a downstream Makefile or run make -f Makefile.import.example imports.
+
+SCHEMA_REPO := WebOfTrust/ietf-said
+# Leave overrides empty for normal imports; set them for exceptional cases.
+SCHEMA_CDDL_VERSION_OVERRIDE ?=
+SCHEMA_JSON_VERSION_OVERRIDE ?=
+
+_CDDL_FILES := $(wildcard imports/said-*.cddl)
+_JSON_FILES := $(wildcard imports/said-*.schema.json)
+_CDDL_LATEST := $(shell printf '%s\n' $(_CDDL_FILES) | sed -n 's|^imports/said-\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)\.cddl$$|\1|p' | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
+_JSON_LATEST := $(shell printf '%s\n' $(_JSON_FILES) | sed -n 's|^imports/said-\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)\.schema\.json$$|\1|p' | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
+
+SCHEMA_CDDL_VERSION := $(or $(SCHEMA_CDDL_VERSION_OVERRIDE),$(_CDDL_LATEST),0.1.1)
+SCHEMA_JSON_VERSION := $(or $(SCHEMA_JSON_VERSION_OVERRIDE),$(_JSON_LATEST),0.1.1)
+SCHEMA_CDDL := imports/said-$(SCHEMA_CDDL_VERSION).cddl
+SCHEMA_JSON := imports/said-$(SCHEMA_JSON_VERSION).schema.json
+SCHEMA_CDDL_URL := https://github.com/$(SCHEMA_REPO)/releases/download/cddl-$(SCHEMA_CDDL_VERSION)/said.cddl
+SCHEMA_JSON_URL := https://github.com/$(SCHEMA_REPO)/releases/download/jsons-$(SCHEMA_JSON_VERSION)/said.schema.json
+
+.PHONY: imports imports-cddl imports-json force-import-links
+
+imports: imports-cddl imports-json
+imports-cddl: imports/said.cddl
+imports-json: imports/said.schema.json
+
+$(SCHEMA_CDDL):
+	@mkdir -p $(@D)
+	@set -e; trap 'rm -f "$@.tmp"' EXIT; \
+		curl -fLSs "$(SCHEMA_CDDL_URL)" -o "$@.tmp"; \
+		mv "$@.tmp" "$@"
+
+$(SCHEMA_JSON):
+	@mkdir -p $(@D)
+	@set -e; trap 'rm -f "$@.tmp"' EXIT; \
+		curl -fLSs "$(SCHEMA_JSON_URL)" -o "$@.tmp"; \
+		mv "$@.tmp" "$@"
+
+imports/said.cddl: $(SCHEMA_CDDL) force-import-links
+	@if [ -e "$@" ] && [ ! -L "$@" ]; then echo "Refusing to replace non-symlink $@" >&2; exit 1; fi
+	@ln -sfn "$(notdir $(SCHEMA_CDDL))" "$@"
+
+imports/said.schema.json: $(SCHEMA_JSON) force-import-links
+	@if [ -e "$@" ] && [ ! -L "$@" ]; then echo "Refusing to replace non-symlink $@" >&2; exit 1; fi
+	@ln -sfn "$(notdir $(SCHEMA_JSON))" "$@"
+
+force-import-links:

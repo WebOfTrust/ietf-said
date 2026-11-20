@@ -5,8 +5,6 @@ docname: draft-ssmith-said-latest
 category: std
 
 ipr: trust200902
-area: TODO
-workgroup: TODO Working Group
 keyword: Internet-Draft
 
 stand_alone: yes
