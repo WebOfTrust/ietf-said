@@ -7,6 +7,16 @@ This is the working area for the individual Internet-Draft, "Self-Addressing IDe
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-ssmith-said)
 * [Compare Editor's Copy to Individual Draft](https://WebOfTrust.github.io/ietf-said/#go.draft-ssmith-said.diff)
 
+## Schema exports
+
+CDDL and JSON Schema are published separately as GitHub release assets:
+
+* `cddl-X.Y.Z` contains `said.cddl`.
+* `jsons-X.Y.Z` contains `said.schema.json`.
+
+The [export guidelines](docs/EXPORT_GUIDELINES.md) describe version pairing,
+pinned download URLs, and an example Makefile for downstream projects.
+
 
 ## Contributing
 
