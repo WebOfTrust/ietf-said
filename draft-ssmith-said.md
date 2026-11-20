@@ -148,7 +148,7 @@ and selects a deterministic serialization profile.
 The serialization profile specifies how to encode and decode the data object so both endpoints reproduce the same bytes.
 
 ~~~
-       Producer                       Consumer
+       Producer                          Consumer
 
 +-----------------------+
 | 1. Render             |
@@ -159,19 +159,19 @@ The serialization profile specifies how to encode and decode the data object so 
 | 3. Validate object    |
 |    against schema     |
 | 4. Encode object      |
-|    in wire format     |      +-----------------------+
-| 5. Send object        |wire->| 6. Receive data       |
-+-----------------------+      |    object from wire   |
-                               | 7. Decode object      |
-                               |    using profile      |
-                               | 8. Validate object    |
-                               |    against schema     |
-                               | 9. Verify object      |
-                               |    integrity using    |
-                               |    embedded SAID      |
-                               | 10. Hand off object   |
-                               |     to application    |
-                               +-----------------------+
+|    in wire format     |         +-----------------------+
+| 5. Send object        |--wire-->| 6. Receive data       |
++-----------------------+         |    object from wire   |
+                                  | 7. Decode object      |
+                                  |    using profile      |
+                                  | 8. Validate object    |
+                                  |    against schema     |
+                                  | 9. Verify object      |
+                                  |    integrity using    |
+                                  |    embedded SAID      |
+                                  | 10. Hand off object   |
+                                  |     to application    |
+                                  +-----------------------+
 ~~~
 
 ## Technology Scope
