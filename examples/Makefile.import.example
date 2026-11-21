@@ -5,6 +5,8 @@ SCHEMA_REPO := WebOfTrust/ietf-said
 # Leave overrides empty for normal imports; set them for exceptional cases.
 SCHEMA_CDDL_VERSION_OVERRIDE ?=
 SCHEMA_JSON_VERSION_OVERRIDE ?=
+# ASN.1 releases have no default version; select an existing release explicitly.
+SCHEMA_ASN1_VERSION ?=
 
 _CDDL_FILES := $(wildcard imports/said-*.cddl)
 _JSON_FILES := $(wildcard imports/said-*.schema.json)
@@ -15,14 +17,17 @@ SCHEMA_CDDL_VERSION := $(or $(SCHEMA_CDDL_VERSION_OVERRIDE),$(_CDDL_LATEST),0.1.
 SCHEMA_JSON_VERSION := $(or $(SCHEMA_JSON_VERSION_OVERRIDE),$(_JSON_LATEST),0.1.1)
 SCHEMA_CDDL := imports/said-$(SCHEMA_CDDL_VERSION).cddl
 SCHEMA_JSON := imports/said-$(SCHEMA_JSON_VERSION).schema.json
+SCHEMA_ASN1 := imports/said-$(SCHEMA_ASN1_VERSION).asn
 SCHEMA_CDDL_URL := https://github.com/$(SCHEMA_REPO)/releases/download/cddl-$(SCHEMA_CDDL_VERSION)/said.cddl
 SCHEMA_JSON_URL := https://github.com/$(SCHEMA_REPO)/releases/download/jsons-$(SCHEMA_JSON_VERSION)/said.schema.json
+SCHEMA_ASN1_URL := https://github.com/$(SCHEMA_REPO)/releases/download/asn1-$(SCHEMA_ASN1_VERSION)/said.asn
 
-.PHONY: imports imports-cddl imports-json force-import-links
+.PHONY: imports imports-cddl imports-json imports-asn1 force-import-links
 
 imports: imports-cddl imports-json
 imports-cddl: imports/said.cddl
 imports-json: imports/said.schema.json
+imports-asn1: imports/said.asn
 
 $(SCHEMA_CDDL):
 	@mkdir -p $(@D)
@@ -36,6 +41,13 @@ $(SCHEMA_JSON):
 		curl -fLSs "$(SCHEMA_JSON_URL)" -o "$@.tmp"; \
 		mv "$@.tmp" "$@"
 
+$(SCHEMA_ASN1):
+	@if [ -z "$(SCHEMA_ASN1_VERSION)" ]; then echo "Set SCHEMA_ASN1_VERSION to an existing release" >&2; exit 1; fi
+	@mkdir -p $(@D)
+	@set -e; trap 'rm -f "$@.tmp"' EXIT; \
+		curl -fLSs "$(SCHEMA_ASN1_URL)" -o "$@.tmp"; \
+		mv "$@.tmp" "$@"
+
 imports/said.cddl: $(SCHEMA_CDDL) force-import-links
 	@if [ -e "$@" ] && [ ! -L "$@" ]; then echo "Refusing to replace non-symlink $@" >&2; exit 1; fi
 	@ln -sfn "$(notdir $(SCHEMA_CDDL))" "$@"
@@ -43,5 +55,10 @@ imports/said.cddl: $(SCHEMA_CDDL) force-import-links
 imports/said.schema.json: $(SCHEMA_JSON) force-import-links
 	@if [ -e "$@" ] && [ ! -L "$@" ]; then echo "Refusing to replace non-symlink $@" >&2; exit 1; fi
 	@ln -sfn "$(notdir $(SCHEMA_JSON))" "$@"
+
+imports/said.asn: $(SCHEMA_ASN1) force-import-links
+	@if [ -z "$(SCHEMA_ASN1_VERSION)" ]; then echo "Set SCHEMA_ASN1_VERSION to an existing release" >&2; exit 1; fi
+	@if [ -e "$@" ] && [ ! -L "$@" ]; then echo "Refusing to replace non-symlink $@" >&2; exit 1; fi
+	@ln -sfn "$(notdir $(SCHEMA_ASN1))" "$@"
 
 force-import-links:

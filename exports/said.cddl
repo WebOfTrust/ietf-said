@@ -8,16 +8,20 @@ $said /= said-urn
 ; The URN payload is the CESR text defined by said-cesr.
 said-urn = $said-urn
 $said-urn /= "urn:cesr:said:" .cat said-cesr
-; CBOR can carry a CESR representation or an algorithm/digest tuple.
+; CBOR can carry a CESR representation, an algorithm/digest tuple, or DER.
 said-cbor = $said-cbor
 $said-cbor /= said-cesr
 $said-cbor /= said-alg-digest
+$said-cbor /= said-der
 
 ; hash-alg-id is from the IANA Named Information Hash Algorithm Registry.
 said-alg-digest = [
   hash-alg-id: int
   hash-value: bstr
 ]
+
+; DER encoding of the ASN.1 SAID type; validate the contents separately.
+said-der = bstr
 ; JSON can carry CESR text or an algorithm/digest object.
 said-json = $said-json
 $said-json /= said-cesr

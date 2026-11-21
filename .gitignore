@@ -3,6 +3,7 @@
 *.redxml
 *.swp
 *.txt
+!examples/requirements.txt
 *.upload
 *~
 .refcache

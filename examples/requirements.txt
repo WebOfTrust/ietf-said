@@ -1,0 +1,2 @@
+asn1tools>=0.167,<1
+jsonschema>=4,<5

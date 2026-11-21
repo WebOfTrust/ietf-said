@@ -3,6 +3,7 @@ draft-ssmith-said.xml: cddl/said-urn.cddl
 draft-ssmith-said.xml: cddl/said-cbor.cddl
 draft-ssmith-said.xml: cddl/said-json.cddl
 draft-ssmith-said.xml: cddl/said-cesr.cddl
+draft-ssmith-said.xml: asn1/said.asn
 draft-ssmith-said.xml: jsons/said-root.json
 draft-ssmith-said.xml: jsons/said-urn.json
 draft-ssmith-said.xml: jsons/said-json.json

@@ -9,13 +9,18 @@ This is the working area for the individual Internet-Draft, "Self-Addressing IDe
 
 ## Schema exports
 
-CDDL and JSON Schema are published separately as GitHub release assets:
+Schema releases are published separately as GitHub release assets:
 
 * `cddl-X.Y.Z` contains `said.cddl`.
 * `jsons-X.Y.Z` contains `said.schema.json`.
+* `asn1-X.Y.Z` is configured to contain `said.asn`.
 
 The [export guidelines](docs/EXPORT_GUIDELINES.md) describe version pairing,
 pinned download URLs, and an example Makefile for downstream projects.
+
+The [ASN.1 module](asn1/said.asn) defines the DER representation. Run
+`make -C asn1 stream` to copy it to `exports/said.asn`. An ASN.1 release
+asset becomes available only after an `asn1-X.Y.Z` tag is published.
 
 
 ## Contributing

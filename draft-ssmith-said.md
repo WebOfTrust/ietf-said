@@ -22,6 +22,13 @@ author:
     email: entropyworks@outlook.com
 
 normative:
+  X680:
+    target: https://www.itu.int/rec/T-REC-X.680
+    title: "Abstract Syntax Notation One (ASN.1): Specification of basic notation"
+    author:
+      ins: ITU-T
+    date: 2021-02
+    seriesinfo: Recommendation X.680
   X690:
     target: https://www.itu.int/rec/T-REC-X.690
     title: "ASN.1 encoding rules: Specification of Basic Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished Encoding Rules (DER)"
@@ -132,7 +139,8 @@ A sufficiently strong cryptographic commitment to the identifier also commits to
 
 A `self-addressing identifier (SAID)` is a content-addressable identifier that is also self-referential.
 It is included in the serialization it identifies.
-This document describes the SAID derivation and verification process and the supported CESR, CBOR, JSON, and URN representations.
+This document describes the SAID derivation and verification process and the supported CESR, CBOR, JSON, URN,
+and ASN.1 DER representations.
 
 The urn said is now a registered namespace at IANA [URNSAID].
 The urn said namespace uses the SAID protocol.
@@ -177,8 +185,8 @@ The serialization profile specifies how to encode and decode the data object so 
 ## Technology Scope
 
 The architecture is independent of a particular programming language or in-memory data structure.
-This document describes SAID representations for CESR, CBOR, JSON, and URN,
-with CDDL and JSON Schema definitions where applicable.
+This document describes SAID representations for CESR, CBOR, JSON, URN, and ASN.1 DER,
+with CDDL, JSON Schema, and ASN.1 definitions where applicable.
 Application profiles select the schema for the data object and the deterministic serialization profile.
 The Python mappings and particular digest, serialization, or envelope choices in the examples illustrate possible realizations;
 they are not prerequisites for implementing the architecture.
@@ -490,9 +498,10 @@ tamper-evident composition without embedding the referenced content in full.
 # SAID Schema Definitions
 
 This section defines the syntax of the supported `SAID` values.
-The CDDL fragments define the `said` type for CESR, CBOR, JSON, and URN representations.
+The CDDL fragments define the `said` type for CESR, CBOR, JSON, URN, and DER representations.
 The JSON Schema fragments define `SAID` values represented as JSON, including CESR strings and URNs.
-CBOR representations rely exclusively on the CDDL schema expression.
+The ASN.1 module defines `SAID` values encoded using DER.
+The CDDL schema describes CBOR values; a DER value carried in a byte string also requires ASN.1 validation.
 These schemas define `SAID` values, not the application data objects that contain them.
 
 An application profile that requires a detached payload to carry a self-referential `SAID` MUST specify the location and
@@ -502,12 +511,12 @@ and the deterministic serialization profile used to generate and verify the `SAI
 ## CDDL
 
 The CDDL fragments below collectively define the top-level `said` type.
-The root fragment declares the type and its representation alternatives;
+The top-level fragment declares the type and its representation alternatives;
 the following fragments define those alternatives in the order used to assemble the schema.
 
-### Root `said` Type
+### Top-Level `said` Type
 
-The root fragment defines `said` as an extensible choice over the supported representations.
+The top-level fragment defines `said` as an extensible choice over the supported representations.
 
 ~~~ cddl
 {::include cddl/said-root.cddl}
@@ -523,8 +532,9 @@ The URN representation prefixes a CESR value with `urn:cesr:said:`.
 
 ### CBOR Representation
 
-The CBOR representation is either a CESR value or an array containing an integer hash algorithm identifier
-and a byte-string digest.
+The CBOR representation is a CESR value, an array containing an integer hash algorithm identifier
+and a byte-string digest, or a byte string containing a DER-encoded ASN.1 `SAID`.
+The CDDL byte-string rule does not validate the encoded ASN.1 value; the DER contents require separate validation.
 
 ~~~ cddl
 {::include cddl/said-cbor.cddl}
@@ -547,6 +557,36 @@ The schema defines codes and digest-text lengths for 256-bit and 512-bit digest 
 ~~~ cddl
 {::include cddl/said-cesr.cddl}
 ~~~
+
+## ASN.1 DER Representation
+
+The following ASN.1 [X680] module defines two alternatives for a `SAID` encoded using DER [X690].
+The `algDigest` alternative contains an object identifier for the hash algorithm and its raw digest.
+The `cesr` alternative contains a CESR `SAID` in textual form.
+The alternatives use distinct ASN.1 tags and are distinguishable when decoding the DER value.
+
+~~~ asn.1
+{::include asn1/said.asn}
+~~~
+
+An application profile MUST specify the permitted alternatives, hash algorithms and their object identifiers,
+and the required digest lengths.  It MUST specify how object identifiers correspond to any hash identifiers used
+in other representations.  For example, the object identifier for SHA-256 is `2.16.840.1.101.3.4.2.1`.
+The `cesr` alternative MUST contain a valid CESR `SAID` using a permitted algorithm.
+Implementations MUST reject unsupported algorithms, incorrect digest lengths, invalid CESR values,
+and encodings that are not valid DER for the `SAID` type.
+
+When DER is carried in CBOR, the containing field or application profile identifies the byte string as a DER `SAID`.
+The `said-der` CDDL rule names that representation but does not signal it on the wire or invoke a DER decoder.
+If the context does not distinguish it from other byte strings, the profile MUST provide a discriminator.
+A CBOR tag is one possible discriminator, but this document does not assign one.
+
+For a PKIX certificate extension, an application profile can identify the extension by an object identifier and
+specify that the extension's `extnValue` contains the DER encoding of the ASN.1 `SAID`.
+This document does not assign a certificate extension object identifier or define its criticality.
+The profile MUST also define the location of the `SAID`, the placeholder and serialization used for derivation,
+and how to handle any certificate signature dependency.
+Decoding and validating a `SAID` representation does not by itself verify its self-referential binding.
 
 ## JSON Schema
 
