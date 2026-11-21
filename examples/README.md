@@ -50,3 +50,7 @@ them against the CDDL and JSON Schema definitions. The CBOR diagnostics are
 converted to CBOR and validated against a CDDL root that selects `said-cbor`.
 Each CBOR output also gets a `.pretty` companion from `cbor2pretty.rb` for
 inspection; schema validation is performed against the binary `.cbor` file.
+The check also compiles the [ASN.1 module](../asn1/said.asn), exercises both DER
+alternatives, and validates their CBOR byte-string wrappers. Install the Python
+dependencies from [requirements.txt](requirements.txt) before running it.
+CDDL validation alone does not validate the contents of a DER byte string.

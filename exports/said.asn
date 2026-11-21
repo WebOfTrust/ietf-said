@@ -1,0 +1,12 @@
+SAID-Module DEFINITIONS ::=
+BEGIN
+
+SAID ::= CHOICE {
+    algDigest SEQUENCE {
+        hashAlgorithm OBJECT IDENTIFIER,
+        digest        OCTET STRING
+    },
+    cesr IA5String
+}
+
+END

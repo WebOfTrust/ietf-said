@@ -9,9 +9,11 @@ CBOR_TEST_SCHEMA := cbor/said-cbor-test.cddl
 .PHONY: check schemas generate clean
 
 check: schemas generate $(CBOR_TEST_SCHEMA)
+	cmp ../asn1/said.asn ../exports/said.asn
 	$(CDDL) $(CDDL_SCHEMA) validate cesr/said-cesr-text.json cesr/said-blake2b-512-text.json json/said-json-alg-digest.json json/said-json-blake2b-512-alg-digest.json urn/said-urn-sha-256.json urn/said-urn-blake2b-512.json
 	$(CDDL) $(CBOR_TEST_SCHEMA) validate cbor/said-cbor-alg-digest.cbor cbor/said-cbor-cesr.cbor cbor/said-cbor-blake2b-512-cesr.cbor
 	$(PYTHON) validate-json.py $(JSON_SCHEMA) cesr/said-cesr-text.json cesr/said-blake2b-512-text.json json/said-json-alg-digest.json json/said-json-blake2b-512-alg-digest.json urn/said-urn-sha-256.json urn/said-urn-blake2b-512.json
+	CDDL="$(CDDL)" $(PYTHON) test_der.py
 
 $(CBOR_TEST_SCHEMA): $(CDDL_SCHEMA)
 	@printf 'said-cbor-example = said-cbor\n' > $@.tmp
@@ -21,6 +23,7 @@ $(CBOR_TEST_SCHEMA): $(CDDL_SCHEMA)
 schemas:
 	$(MAKE) -C ../cddl stream
 	$(MAKE) -C ../jsons stream
+	$(MAKE) -C ../asn1 stream
 
 generate:
 	$(PYTHON) generate.py
